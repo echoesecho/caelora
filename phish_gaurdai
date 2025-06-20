@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard AI - Phishing Detection Tool</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --safe-color: #2ecc71;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .analyzer-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #3a5a8f;
+        }
+        
+        .results-section {
+            display: none;
+            margin-top: 30px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .verdict {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-right: 15px;
+        }
+        
+        .verdict.safe {
+            color: var(--safe-color);
+        }
+        
+        .verdict.suspicious {
+            color: var(--warning-color);
+        }
+        
+        .verdict.phishing {
+            color: var(--danger-color);
+        }
+        
+        .confidence-meter {
+            flex-grow: 1;
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .confidence-percent {
+            font-weight: 600;
+        }
+        
+        .red-flags {
+            margin-top: 25px;
+        }
+        
+        .flag-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--danger-color);
+            background-color: #fef2f2;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .flag-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .flag-title i {
+            margin-right: 8px;
+        }
+        
+        .suggestions {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f0f7ff;
+            border-radius: 4px;
+        }
+        
+        .suggestion-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PhishGuard AI</h1>
+            <p class="subtitle">Paste suspicious emails or messages to detect phishing attempts and red flags</p>
+        </header>
+        
+        <div class="analyzer-card">
+            <div class="input-section">
+                <label for="message-input">Paste the suspicious message here:</label>
+                <textarea id="message-input" placeholder="Paste the email or message you want to analyze here..."></textarea>
+            </div>
+            
+            <button id="analyze-btn">Analyze for Phishing Attempts</button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing message for phishing indicators...</p>
+            </div>
+            
+            <div class="results-section" id="results">
+                <div class="result-header">
+                    <div class="verdict" id="verdict">Phishing Detected</div>
+                    <div class="confidence-meter">
+                        <div class="confidence-level" id="confidence-level"></div>
+                    </div>
+                    <div class="confidence-percent" id="confidence-percent">85%</div>
+                </div>
+                
+                <div class="red-flags" id="red-flags">
+                    <h3>Detected Red Flags:</h3>
+                    <!-- Red flags will be inserted here by JavaScript -->
+                </div>
+                
+                <div class="suggestions">
+                    <div class="suggestion-title">Recommended Actions:</div>
+                    <div id="suggestions-list">
+                        <!-- Suggestions will be inserted here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>PhishGuard AI uses artificial intelligence to detect potential phishing attempts. Always use caution with suspicious messages.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const messageInput = document.getElementById('message-input');
+            const resultsSection = document.getElementById('results');
+            const loadingSection = document.getElementById('loading');
+            const verdictElement = document.getElementById('verdict');
+            const confidenceLevel = document.getElementById('confidence-level');
+            const confidencePercent = document.getElementById('confidence-percent');
+            const redFlagsContainer = document.getElementById('red-flags');
+            const suggestionsList = document.getElementById('suggestions-list');
+            
+            analyzeBtn.addEventListener('click', analyzeMessage);
+            
+            function analyzeMessage() {
+                const message = messageInput.value.trim();
+                
+                if (!message) {
+                    alert('Please paste a message to analyze');
+                    return;
+                }
+                
+                // Show loading state
+                loadingSection.style.display = 'block';
+                resultsSection.style.display = 'none';
+                
+                // Simulate AI analysis (in a real app, this would call an API)
+                setTimeout(() => {
+                    const analysisResult = performPhishingAnalysis(message);
+                    displayResults(analysisResult);
+                    
+                    // Hide loading, show results
+                    loadingSection.style.display = 'none';
+                    resultsSection.style.display = 'block';
+                }, 1500);
+            }
+            
+            function performPhishingAnalysis(message) {
+                // This is a simplified analysis - in reality you'd use NLP/machine learning
+                const redFlags = [];
+                let phishingScore = 0;
+                
+                // Check for common phishing indicators
+                if (message.match(/urgent|immediate action required|your account will be closed/i)) {
+                    redFlags.push({
+                        title: "Urgency Language",
+                        description: "Phishing attempts often create a false sense of urgency to pressure you into acting quickly.",
+                        examples: message.match(/urgent|immediate action required|your account will be closed/gi).join(", ")
+                    });
+                    phishingScore += 20;
+                }
+                
+                if (message.match(/click here|update your account|verify your information/i)) {
+                    redFlags.push({
+                        title: "Suspicious Links/Requests",
+                        description: "Requests to click links or provide personal information are common in phishing.",
+                        examples: message.match(/click here|update your account|verify your information/gi).join(", ")
+                    });
+                    phishingScore += 25;
+                }
+                
+                if (message.match(/dear customer|valued member|dear user/i) && !message.match(/your name/i)) {
+                    redFlags.push({
+                        title: "Generic Greeting",
+                        description: "Legitimate organizations usually address you by name, not generic terms.",
+                        examples: message.match(/dear customer|valued member|dear user/gi).join(", ")
+                    });
+                    phishingScore += 10;
+                }
+                
+                if (message.match(/http:\/\/|https:\/\/[^\s]+/i)) {
+                    const urls = message.match(/http:\/\/|https:\/\/[^\s]+/gi) || [];
+                    const suspiciousUrls = urls.filter(url => 
+                        !url.match(/facebook\.com|twitter\.com|linkedin\.com|microsoft\.com|google\.com/i) &&
+                        (url.match(/bit\.ly|goo\.gl|tinyurl\.com|url shortening/i) ||
+                        url.match(/[^\s]+\.[a-z]{2,6}\/[^\s]+/i))
+                    );
+                    
+                    if (suspiciousUrls.length > 0) {
+                        redFlags.push({
+                            title: "Suspicious Links",
+                            description: "The message contains links that may lead to fake websites.",
+                            examples: suspiciousUrls.join(", ")
+                        });
+                        phishingScore += 30;
+                    }
+                }
+                
+                if (message.match(/unusual login attempt|suspicious activity/i)) {
+                    redFlags.push({
+                        title: "False Security Alerts",
+                        description: "Fake security warnings are common phishing tactics to scare you into acting.",
+                        examples: message.match(/unusual login attempt|suspicious activity/gi).join(", ")
+                    });
+                    phishingScore += 15;
+                }
+                
+                if (message.match(/invoice|payment due|unpaid bill/i)) {
+                    redFlags.push({
+                        title: "Financial Pressure",
+                        description: "False invoices or payment requests are common phishing tactics.",
+                        examples: message.match(/invoice|payment due|unpaid bill/gi).join(", ")
+                    });
+                    phishingScore += 20;
+                }
+                
+                // Calculate confidence percentage (capped at 95% for non-certainty)
+                const confidence = Math.min(95, phishingScore);
+                
+                // Determine verdict
+                let verdict;
+                if (confidence > 70) {
+                    verdict = "Highly Likely Phishing";
+                } else if (confidence > 40) {
+                    verdict = "Suspicious Content";
+                } else {
+                    verdict = "Likely Safe";
+                }
+                
+                return {
+                    verdict,
+                    confidence,
+                    redFlags,
+                    isPhishing: confidence > 50
+                };
+            }
+            
+            function displayResults(result) {
+                // Set verdict
+                verdictElement.textContent = result.verdict;
+                verdictElement.className = "verdict " + 
+                    (result.isPhishing ? "phishing" : 
+                    (result.confidence > 40 ? "suspicious" : "safe"));
+                
+                // Set confidence meter
+                confidenceLevel.style.width = `${result.confidence}%`;
+                confidencePercent.textContent = `${result.confidence}%`;
+                
+                // Clear previous flags
+                redFlagsContainer.innerHTML = '<h3>Detected Red Flags:</h3>';
+                
+                // Add detected flags
+                if (result.redFlags.length > 0) {
+                    result.redFlags.forEach(flag => {
+                        const flagElement = document.createElement('div');
+                        flagElement.className = 'flag-item';
+                        flagElement.innerHTML = `
+                            <div class="flag-title">
+                                <i>⚠️</i> ${flag.title}
+                            </div>
+                            <div class="flag-description">${flag.description}</div>
+                            ${flag.examples ? `<div class="flag-examples"><small>Examples: ${flag.examples}</small></div>` : ''}
+                        `;
+                        redFlagsContainer.appendChild(flagElement);
+                    });
+                } else {
+                    const noFlagsElement = document.createElement('div');
+                    noFlagsElement.className = 'flag-item';
+                    noFlagsElement.innerHTML = `
+                        <div class="flag-title">
+                            <i>✅</i> No strong phishing indicators detected
+                        </div>
+                        <div class="flag-description">This message doesn't show obvious signs of phishing, but always remain cautious with unexpected messages.</div>
+                    `;
+                    redFlagsContainer.appendChild(noFlagsElement);
+                }
+                
+                // Add suggestions
+                suggestionsList.innerHTML = '';
+                const suggestions = [];
+                
+                if (result.isPhishing) {
+                    suggestions.push(
+                        "❌ <strong>Do not click any links</strong> or download attachments in this message",
+                        "🔍 Verify the sender's email address carefully - look for subtle misspellings",
+                        "🏠 Visit the company's official website directly (not through links in the message) if you need to check something",
+                        "🗑️ Delete this message after reporting it"
+                    );
+                } else if (result.confidence > 40) {
+                    suggestions.push(
+                        "⚠️ Be cautious with this message - it contains some suspicious elements",
+                        "🔗 Hover over links (without clicking) to see the actual destination URL",
+                        "📧 Contact the organization through official channels to verify if needed"
+                    );
+                } else {
+                    suggestions.push(
+                        "👍 This message appears safe, but always practice good security habits",
+                        "🔒 Regularly update your passwords and enable two-factor authentication",
+                        "📚 Educate yourself about current phishing techniques to stay protected"
+                    );
+                }
+                
+                suggestions.forEach(suggestion => {
+                    const suggestionElement = document.createElement('div');
+                    suggestionElement.innerHTML = suggestion;
+                    suggestionElement.style.marginBottom = '8px';
+                    suggestionsList.appendChild(suggestionElement);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

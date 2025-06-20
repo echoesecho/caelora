@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Classifier</title>
+    <style>
+        :root {
+            --recyclable: #3498db;
+            --organic: #2ecc71;
+            --general: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        h1 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .classifier-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .upload-options {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .upload-option {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0.5rem;
+            flex: 1;
+            min-width: 200px;
+            border: 2px dashed #ddd;
+        }
+        
+        .upload-option:hover {
+            background-color: #f0f7ff;
+            border-color: var(--recyclable);
+        }
+        
+        .upload-option i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .preview-container {
+            text-align: center;
+            margin: 1.5rem 0;
+            display: none;
+        }
+        
+        #image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        #camera-preview {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+            background-color: #eee;
+            display: none;
+        }
+        
+        .capture-btn {
+            display: none;
+            background-color: var(--recyclable);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 1rem auto;
+        }
+        
+        .capture-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .classify-btn {
+            background-color: var(--dark);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: block;
+            margin: 1rem auto;
+            transition: background-color 0.3s;
+        }
+        
+        .classify-btn:hover {
+            background-color: #1a252f;
+        }
+        
+        .classify-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 2rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .result-card {
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .recyclable {
+            background-color: #e1f0fa;
+            border-left: 5px solid var(--recyclable);
+        }
+        
+        .organic {
+            background-color: #e8f8f0;
+            border-left: 5px solid var(--organic);
+        }
+        
+        .general {
+            background-color: #fdedec;
+            border-left: 5px solid var(--general);
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .recyclable .result-title {
+            color: var(--recyclable);
+        }
+        
+        .organic .result-title {
+            color: var(--organic);
+        }
+        
+        .general .result-title {
+            color: var(--general);
+        }
+        
+        .confidence-meter {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .recyclable .confidence-level {
+            background-color: var(--recyclable);
+        }
+        
+        .organic .confidence-level {
+            background-color: var(--organic);
+        }
+        
+        .general .confidence-level {
+            background-color: var(--general);
+        }
+        
+        .confidence-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .disposal-tips {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        
+        .disposal-tips h4 {
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--dark);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .history {
+            margin-top: 2rem;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 1rem;
+        }
+        
+        .history-class {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        .class-recyclable {
+            background-color: #e1f0fa;
+            color: var(--recyclable);
+        }
+        
+        .class-organic {
+            background-color: #e8f8f0;
+            color: var(--organic);
+        }
+        
+        .class-general {
+            background-color: #fdedec;
+            color: var(--general);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            padding: 1rem;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .upload-options {
+                flex-direction: column;
+            }
+            
+            .upload-option {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Waste Classifier</h1>
+            <p class="subtitle">Upload or take a photo of trash to classify it as recyclable, organic, or general waste</p>
+        </header>
+        
+        <div class="classifier-card">
+            <div class="upload-options">
+                <div class="upload-option" id="upload-btn">
+                    <i class="fas fa-upload"></i>
+                    <h3>Upload Photo</h3>
+                    <p>Select an image from your device</p>
+                </div>
+                <div class="upload-option" id="camera-btn">
+                    <i class="fas fa-camera"></i>
+                    <h3>Take Photo</h3>
+                    <p>Use your camera to capture trash</p>
+                </div>
+            </div>
+            
+            <input type="file" id="file-input" accept="image/*">
+            
+            <div class="preview-container" id="upload-preview">
+                <img id="image-preview" src="#" alt="Preview">
+            </div>
+            
+            <div class="preview-container" id="camera-preview-container">
+                <video id="camera-preview" autoplay playsinline></video>
+                <button class="capture-btn" id="capture-btn">Capture Image</button>
+            </div>
+            
+            <canvas id="canvas" style="display:none;"></canvas>
+            
+            <button class="classify-btn" id="classify-btn" disabled>Classify Waste</button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing waste composition...</p>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="result-card" id="result-card">
+                    <div class="result-title" id="result-title">Recyclable</div>
+                    <div class="confidence-text" id="confidence-text">85% confidence</div>
+                    <div class="confidence-meter">
+                        <div class="confidence-level" id="confidence-level"></div>
+                    </div>
+                    
+                    <div class="disposal-tips" id="disposal-tips">
+                        <h4>How to properly dispose:</h4>
+                        <p id="disposal-instructions">Rinse the item if necessary and place it in the recycling bin. Check local guidelines for specific materials.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="history" id="history">
+            <h3>Recent Classifications</h3>
+            <div id="history-list"></div>
+        </div>
+        
+        <footer>
+            <p>Smart Waste Classifier uses AI to help with proper waste disposal. Always follow local recycling guidelines.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const uploadBtn = document.getElementById('upload-btn');
+            const cameraBtn = document.getElementById('camera-btn');
+            const fileInput = document.getElementById('file-input');
+            const imagePreview = document.getElementById('image-preview');
+            const cameraPreview = document.getElementById('camera-preview');
+            const cameraContainer = document.getElementById('camera-preview-container');
+            const captureBtn = document.getElementById('capture-btn');
+            const canvas = document.getElementById('canvas');
+            const classifyBtn = document.getElementById('classify-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const resultCard = document.getElementById('result-card');
+            const resultTitle = document.getElementById('result-title');
+            const confidenceText = document.getElementById('confidence-text');
+            const confidenceLevel = document.getElementById('confidence-level');
+            const disposalInstructions = document.getElementById('disposal-instructions');
+            const historyList = document.getElementById('history-list');
+            
+            // State variables
+            let currentImage = null;
+            let stream = null;
+            
+            // Load classification history from localStorage
+            let classificationHistory = JSON.parse(localStorage.getItem('wasteClassificationHistory')) || [];
+            renderHistory();
+            
+            // Event listeners
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            cameraBtn.addEventListener('click', startCamera);
+            fileInput.addEventListener('change', handleFileUpload);
+            captureBtn.addEventListener('click', captureImage);
+            classifyBtn.addEventListener('click', classifyWaste);
+            
+            // Handle file upload
+            function handleFileUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Stop camera if active
+                stopCamera();
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    document.getElementById('upload-preview').style.display = 'block';
+                    cameraContainer.style.display = 'none';
+                    currentImage = event.target.result;
+                    classifyBtn.disabled = false;
+                }
+                reader.readAsDataURL(file);
+            }
+            
+            // Start camera
+            function startCamera() {
+                // Hide upload preview if showing
+                document.getElementById('upload-preview').style.display = 'none';
+                
+                // Check if camera is already running
+                if (stream) {
+                    cameraContainer.style.display = 'block';
+                    return;
+                }
+                
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(s) {
+                        stream = s;
+                        cameraPreview.srcObject = stream;
+                        cameraContainer.style.display = 'block';
+                        captureBtn.style.display = 'block';
+                        classifyBtn.disabled = true;
+                    })
+                    .catch(function(err) {
+                        console.error("Camera error: ", err);
+                        alert("Could not access the camera. Please check permissions.");
+                    });
+            }
+            
+            // Stop camera
+            function stopCamera() {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                    cameraPreview.srcObject = null;
+                    cameraContainer.style.display = 'none';
+                    captureBtn.style.display = 'none';
+                }
+            }
+            
+            // Capture image from camera
+            function captureImage() {
+                if (!stream) return;
+                
+                const context = canvas.getContext('2d');
+                canvas.width = cameraPreview.videoWidth;
+                canvas.height = cameraPreview.videoHeight;
+                context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+                
+                currentImage = canvas.toDataURL('image/jpeg');
+                imagePreview.src = currentImage;
+                document.getElementById('upload-preview').style.display = 'block';
+                cameraContainer.style.display = 'none';
+                classifyBtn.disabled = false;
+                
+                // Stop camera after capture
+                stopCamera();
+            }
+            
+            // Classify the waste
+            function classifyWaste() {
+                if (!currentImage) return;
+                
+                // Show loading state
+                loading.style.display = 'block';
+                results.style.display = 'none';
+                classifyBtn.disabled = true;
+                
+                // Simulate AI processing (in production, call an actual API)
+                setTimeout(() => {
+                    const classification = simulateWasteClassification(currentImage);
+                    displayResults(classification);
+                    
+                    // Add to history
+                    classificationHistory.unshift({
+                        image: currentImage,
+                        classification: classification.type,
+                        confidence: classification.confidence,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Keep only last 5 items
+                    if (classificationHistory.length > 5) {
+                        classificationHistory = classificationHistory.slice(0, 5);
+                    }
+                    
+                    // Save to localStorage
+                    localStorage.setItem('wasteClassificationHistory', JSON.stringify(classificationHistory));
+                    renderHistory();
+                    
+                    // Hide loading, show results
+                    loading.style.display = 'none';
+                    results.style.display = 'block';
+                    classifyBtn.disabled = false;
+                }, 2000);
+            }
+            
+            // Simulate waste classification (replace with real API call)
+            function simulateWasteClassification(imageData) {
+                // In a real app, you would:
+                // 1. Send the image to a machine learning API (like TensorFlow.js, Google AutoML, or a custom API)
+                // 2. Get back classification results
+                
+                // For this demo, we'll simulate different results based on random selection
+                const types = [
+                    { 
+                        type: 'Recyclable',
+                        colorClass: 'recyclable',
+                        confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
+                        disposalTips: 'Rinse the item if necessary and place it in the recycling bin. Check local guidelines for specific materials.'
+                    },
+                    { 
+                        type: 'Organic', 
+                        colorClass: 'organic',
+                        confidence: Math.floor(Math.random() * 30) + 70,
+                        disposalTips: 'Place in compost bin if available. If not, use general waste but consider starting composting for food scraps.'
+                    },
+                    { 
+                        type: 'General Waste', 
+                        colorClass: 'general',
+                        confidence: Math.floor(Math.random() * 30) + 70,
+                        disposalTips: 'Dispose in general waste bin. Consider if items can be reused or repurposed before throwing away.'
+                    }
+                ];
+                
+                // Randomly select a type (weighted slightly toward recyclable)
+                const weights = [0.4, 0.35, 0.25]; // Recyclable, Organic, General
+                let random = Math.random();
+                let selectedIndex;
+                
+                if (random < weights[0]) selectedIndex = 0;
+                else if (random < weights[0] + weights[1]) selectedIndex = 1;
+                else selectedIndex = 2;
+                
+                return types[selectedIndex];
+            }
+            
+            // Display classification results
+            function displayResults(result) {
+                // Set result card styling
+                resultCard.className = `result-card ${result.colorClass}`;
+                resultTitle.textContent = result.type;
+                resultTitle.className = `result-title`;
+                confidenceText.textContent = `${result.confidence}% confidence`;
+                confidenceLevel.style.width = `${result.confidence}%`;
+                confidenceLevel.className = `confidence-level`;
+                disposalInstructions.textContent = result.disposalTips;
+            }
+            
+            // Render classification history
+            function renderHistory() {
+                historyList.innerHTML = '';
+                
+                if (classificationHistory.length === 0) {
+                    historyList.innerHTML = '<p>No recent classifications</p>';
+                    return;
+                }
+                
+                classificationHistory.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    
+                    const thumbnail = document.createElement('img');
+                    thumbnail.className = 'history-thumbnail';
+                    thumbnail.src = item.image;
+                    
+                    const type = document.createElement('div');
+                    type.className = 'history-class ' + 
+                        (item.classification === 'Recyclable' ? 'class-recyclable' :
+                         item.classification === 'Organic' ? 'class-organic' : 'class-general');
+                    type.textContent = item.classification;
+                    
+                    historyItem.appendChild(thumbnail);
+                    historyItem.appendChild(type);
+                    historyList.appendChild(historyItem);
+                    
+                    // Make clickable to re-classify
+                    historyItem.style.cursor = 'pointer';
+                    historyItem.addEventListener('click', () => {
+                        imagePreview.src = item.image;
+                        document.getElementById('upload-preview').style.display = 'block';
+                        cameraContainer.style.display = 'none';
+                        currentImage = item.image;
+                        classifyBtn.disabled = false;
+                    });
+                });
+            }
+            
+            // Clean up camera on page unload
+            window.addEventListener('beforeunload', stopCamera);
+        });
+    </script>
+</body>
+</html>

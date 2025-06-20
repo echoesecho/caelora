@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Footprint Tracker</title>
+    <style>
+        :root {
+            --primary: #27ae60;
+            --secondary: #2c3e50;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        h1 {
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .tracker-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .tab:hover:not(.active) {
+            border-bottom-color: #bdc3c7;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-group input {
+            flex: 1;
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .input-group .unit {
+            padding: 0.75rem;
+            background-color: #eee;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #219653;
+        }
+        
+        button.secondary {
+            background-color: var(--secondary);
+        }
+        
+        button.secondary:hover {
+            background-color: #1a252f;
+        }
+        
+        .activity-list {
+            margin-top: 1.5rem;
+        }
+        
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-info {
+            flex: 1;
+        }
+        
+        .activity-type {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .activity-details {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .activity-co2 {
+            font-weight: 600;
+            color: var(--dark);
+            margin-left: 1rem;
+        }
+        
+        .delete-btn {
+            color: var(--danger);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            margin-left: 1rem;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .co2-total {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+        
+        .co2-comparison {
+            color: #7f8c8d;
+            margin-bottom: 1rem;
+        }
+        
+        .category-breakdown {
+            display: flex;
+            justify-content: space-between;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .category {
+            flex: 1;
+            min-width: 120px;
+            margin: 0.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .category-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .category-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .suggestions {
+            margin-top: 2rem;
+        }
+        
+        .suggestion-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .suggestion-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .suggestion-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            color: var(--primary);
+        }
+        
+        .suggestion-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+        
+        .suggestion-impact {
+            margin-left: auto;
+            background-color: var(--light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .suggestion-desc {
+            color: #7f8c8d;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            padding: 1rem;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-bottom: none;
+                border-left: 3px solid transparent;
+            }
+            
+            .tab.active {
+                border-bottom: none;
+                border-left-color: var(--primary);
+            }
+            
+            .category {
+                min-width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Carbon Footprint Tracker</h1>
+            <p class="subtitle">Log your daily activities to estimate your carbon emissions and get reduction tips</p>
+        </header>
+        
+        <div class="tracker-card">
+            <div class="tabs">
+                <div class="tab active" data-tab="transport">Transport</div>
+                <div class="tab" data-tab="food">Food</div>
+                <div class="tab" data-tab="energy">Energy</div>
+                <div class="tab" data-tab="other">Other</div>
+            </div>
+            
+            <!-- Transport Tab -->
+            <div class="tab-content active" id="transport">
+                <div class="form-group">
+                    <label for="transport-type">Transport Method</label>
+                    <select id="transport-type">
+                        <option value="car-gas">Car (Gasoline)</option>
+                        <option value="car-diesel">Car (Diesel)</option>
+                        <option value="car-hybrid">Car (Hybrid)</option>
+                        <option value="car-electric">Car (Electric)</option>
+                        <option value="bus">Bus</option>
+                        <option value="train">Train</option>
+                        <option value="subway">Subway/Metro</option>
+                        <option value="motorcycle">Motorcycle</option>
+                        <option value="bicycle">Bicycle</option>
+                        <option value="walk">Walk</option>
+                        <option value="flight-domestic">Flight (Domestic)</option>
+                        <option value="flight-international">Flight (International)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transport-distance">Distance</label>
+                    <div class="input-group">
+                        <input type="number" id="transport-distance" placeholder="e.g., 10">
+                        <span class="unit">miles</span>
+                    </div>
+                </div>
+                
+                <button id="add-transport">Add Transportation</button>
+            </div>
+            
+            <!-- Food Tab -->
+            <div class="tab-content" id="food">
+                <div class="form-group">
+                    <label for="food-type">Food Item</label>
+                    <select id="food-type">
+                        <option value="beef">Beef</option>
+                        <option value="lamb">Lamb</option>
+                        <option value="pork">Pork</option>
+                        <option value="chicken">Chicken</option>
+                        <option value="fish">Fish</option>
+                        <option value="eggs">Eggs</option>
+                        <option value="dairy">Dairy (Milk, Cheese)</option>
+                        <option value="rice">Rice</option>
+                        <option value="wheat">Wheat/Bread</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="nuts">Nuts</option>
+                        <option value="processed">Processed Food</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="food-amount">Amount</label>
+                    <div class="input-group">
+                        <input type="number" id="food-amount" placeholder="e.g., 200">
+                        <span class="unit">grams</span>
+                    </div>
+                </div>
+                
+                <button id="add-food">Add Food</button>
+            </div>
+            
+            <!-- Energy Tab -->
+            <div class="tab-content" id="energy">
+                <div class="form-group">
+                    <label for="energy-type">Energy Type</label>
+                    <select id="energy-type">
+                        <option value="electricity">Electricity</option>
+                        <option value="natural-gas">Natural Gas</option>
+                        <option value="heating-oil">Heating Oil</option>
+                        <option value="coal">Coal</option>
+                        <option value="propane">Propane</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="energy-amount">Amount</label>
+                    <div class="input-group">
+                        <input type="number" id="energy-amount" placeholder="e.g., 50">
+                        <span class="unit" id="energy-unit">kWh</span>
+                    </div>
+                </div>
+                
+                <button id="add-energy">Add Energy</button>
+            </div>
+            
+            <!-- Other Tab -->
+            <div class="tab-content" id="other">
+                <div class="form-group">
+                    <label for="other-type">Activity</label>
+                    <select id="other-type">
+                        <option value="clothing">Clothing Purchase</option>
+                        <option value="electronics">Electronics Purchase</option>
+                        <option value="furniture">Furniture Purchase</option>
+                        <option value="waste">Waste Generated</option>
+                        <option value="water">Water Usage</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="other-amount">Amount</label>
+                    <div class="input-group">
+                        <input type="number" id="other-amount" placeholder="e.g., 1">
+                        <span class="unit" id="other-unit">items</span>
+                    </div>
+                </div>
+                
+                <button id="add-other">Add Activity</button>
+            </div>
+            
+            <div class="activity-list" id="activity-list">
+                <!-- Activities will be added here -->
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Calculating your carbon footprint...</p>
+            </div>
+            
+            <button class="secondary" id="calculate-btn">Calculate Carbon Footprint</button>
+            
+            <div class="results" id="results">
+                <div class="summary-card">
+                    <h3>Your Daily Carbon Footprint</h3>
+                    <div class="co2-total" id="co2-total">0</div>
+                    <div class="co2-comparison" id="co2-comparison">That's equivalent to 0 trees needed to absorb your CO₂</div>
+                </div>
+                
+                <div class="category-breakdown">
+                    <div class="category">
+                        <div class="category-name">Transport</div>
+                        <div class="category-value" id="transport-co2">0 kg</div>
+                    </div>
+                    <div class="category">
+                        <div class="category-name">Food</div>
+                        <div class="category-value" id="food-co2">0 kg</div>
+                    </div>
+                    <div class="category">
+                        <div class="category-name">Energy</div>
+                        <div class="category-value" id="energy-co2">0 kg</div>
+                    </div>
+                    <div class="category">
+                        <div class="category-name">Other</div>
+                        <div class="category-value" id="other-co2">0 kg</div>
+                    </div>
+                </div>
+                
+                <div class="suggestions">
+                    <h3>Reduction Suggestions</h3>
+                    <div id="suggestions-list">
+                        <!-- Suggestions will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Carbon Footprint Tracker helps you understand and reduce your environmental impact. Values are estimates.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const activityList = document.getElementById('activity-list');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const co2Total = document.getElementById('co2-total');
+            const co2Comparison = document.getElementById('co2-comparison');
+            const transportCo2 = document.getElementById('transport-co2');
+            const foodCo2 = document.getElementById('food-co2');
+            const energyCo2 = document.getElementById('energy-co2');
+            const otherCo2 = document.getElementById('other-co2');
+            const suggestionsList = document.getElementById('suggestions-list');
+            
+            // Energy unit switcher
+            const energyType = document.getElementById('energy-type');
+            const energyUnit = document.getElementById('energy-unit');
+            
+            // Other unit switcher
+            const otherType = document.getElementById('other-type');
+            const otherUnit = document.getElementById('other-unit');
+            
+            // Activity data
+            let activities = [];
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                    
+                    // Update units based on tab
+                    if (tab.dataset.tab === 'energy') {
+                        updateEnergyUnit();
+                    } else if (tab.dataset.tab === 'other') {
+                        updateOtherUnit();
+                    }
+                });
+            });
+            
+            // Energy unit update
+            energyType.addEventListener('change', updateEnergyUnit);
+            
+            function updateEnergyUnit() {
+                const type = energyType.value;
+                if (type === 'electricity') {
+                    energyUnit.textContent = 'kWh';
+                } else if (type === 'natural-gas' || type === 'propane') {
+                    energyUnit.textContent = 'therms';
+                } else {
+                    energyUnit.textContent = 'gallons';
+                }
+            }
+            
+            // Other unit update
+            otherType.addEventListener('change', updateOtherUnit);
+            
+            function updateOtherUnit() {
+                const type = otherType.value;
+                if (type === 'waste') {
+                    otherUnit.textContent = 'kg';
+                } else if (type === 'water') {
+                    otherUnit.textContent = 'gallons';
+                } else {
+                    otherUnit.textContent = 'items';
+                }
+            }
+            
+            // Add transport activity
+            document.getElementById('add-transport').addEventListener('click', () => {
+                const type = document.getElementById('transport-type').value;
+                const distance = parseFloat(document.getElementById('transport-distance').value);
+                
+                if (!distance || distance <= 0) {
+                    alert('Please enter a valid distance');
+                    return;
+                }
+                
+                addActivity('transport', type, distance);
+                document.getElementById('transport-distance').value = '';
+            });
+            
+            // Add food activity
+            document.getElementById('add-food').addEventListener('click', () => {
+                const type = document.getElementById('food-type').value;
+                const amount = parseFloat(document.getElementById('food-amount').value);
+                
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                
+                addActivity('food', type, amount);
+                document.getElementById('food-amount').value = '';
+            });
+            
+            // Add energy activity
+            document.getElementById('add-energy').addEventListener('click', () => {
+                const type = document.getElementById('energy-type').value;
+                const amount = parseFloat(document.getElementById('energy-amount').value);
+                
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                
+                addActivity('energy', type, amount);
+                document.getElementById('energy-amount').value = '';
+            });
+            
+            // Add other activity
+            document.getElementById('add-other').addEventListener('click', () => {
+                const type = document.getElementById('other-type').value;
+                const amount = parseFloat(document.getElementById('other-amount').value);
+                
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                
+                addActivity('other', type, amount);
+                document.getElementById('other-amount').value = '';
+            });
+            
+            // Add activity to list
+            function addActivity(category, type, amount) {
+                const activity = {
+                    id: Date.now(),
+                    category,
+                    type,
+                    amount,
+                    timestamp: new Date().toISOString()
+                };
+                
+                activities.push(activity);
+                renderActivity(activity);
+            }
+            
+            // Render activity in list
+            function renderActivity(activity) {
+                const activityNames = {
+                    'transport': {
+                        'car-gas': 'Gasoline Car',
+                        'car-diesel': 'Diesel Car',
+                        'car-hybrid': 'Hybrid Car',
+                        'car-electric': 'Electric Car',
+                        'bus': 'Bus',
+                        'train': 'Train',
+                        'subway': 'Subway/Metro',
+                        'motorcycle': 'Motorcycle',
+                        'bicycle': 'Bicycle',
+                        'walk': 'Walk',
+                        'flight-domestic': 'Domestic Flight',
+                        'flight-international': 'International Flight'
+                    },
+                    'food': {
+                        'beef': 'Beef',
+                        'lamb': 'Lamb',
+                        'pork': 'Pork',
+                        'chicken': 'Chicken',
+                        'fish': 'Fish',
+                        'eggs': 'Eggs',
+                        'dairy': 'Dairy',
+                        'rice': 'Rice',
+                        'wheat': 'Wheat/Bread',
+                        'vegetables': 'Vegetables',
+                        'fruits': 'Fruits',
+                        'nuts': 'Nuts',
+                        'processed': 'Processed Food'
+                    },
+                    'energy': {
+                        'electricity': 'Electricity',
+                        'natural-gas': 'Natural Gas',
+                        'heating-oil': 'Heating Oil',
+                        'coal': 'Coal',
+                        'propane': 'Propane'
+                    },
+                    'other': {
+                        'clothing': 'Clothing',
+                        'electronics': 'Electronics',
+                        'furniture': 'Furniture',
+                        'waste': 'Waste',
+                        'water': 'Water Usage'
+                    }
+                };
+                
+                const units = {
+                    'transport': 'miles',
+                    'food': 'g',
+                    'energy': energyUnit.textContent,
+                    'other': otherUnit.textContent
+                };
+                
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.dataset.id = activity.id;
+                
+                activityItem.innerHTML = `
+                    <div class="activity-info">
+                        <div class="activity-type">${activityNames[activity.category][activity.type]}</div>
+                        <div class="activity-details">${activity.amount} ${units[activity.category]}</div>
+                    </div>
+                    <div class="activity-co2">Calculating...</div>
+                    <button class="delete-btn">&times;</button>
+                `;
+                
+                activityList.appendChild(activityItem);
+                
+                // Add delete handler
+                activityItem.querySelector('.delete-btn').addEventListener('click', () => {
+                    activities = activities.filter(a => a.id !== activity.id);
+                    activityItem.remove();
+                });
+            }
+            
+            // Calculate carbon footprint
+            calculateBtn.addEventListener('click', calculateFootprint);
+            
+            function calculateFootprint() {
+                if (activities.length === 0) {
+                    alert('Please add at least one activity');
+                    return;
+                }
+                
+                loading.style.display = 'block';
+                results.style.display = 'none';
+                
+                // Simulate calculation (in production, this would be more sophisticated)
+                setTimeout(() => {
+                    const footprint = calculateCarbonFootprint(activities);
+                    displayResults(footprint);
+                    
+                    loading.style.display = 'none';
+                    results.style.display = 'block';
+                    
+                    // Scroll to results
+                    results.scrollIntoView({ behavior: 'smooth' });
+                }, 1500);
+            }
+            
+            // Calculate carbon footprint from activities
+            function calculateCarbonFootprint(activities) {
+                // Emission factors (kg CO2e per unit)
+                // These are approximate values for demonstration
+                const emissionFactors = {
+                    'transport': {
+                        'car-gas': 0.404, // kg CO2 per mile
+                        'car-diesel': 0.371,
+                        'car-hybrid': 0.212,
+                        'car-electric': 0.123,
+                        'bus': 0.105,
+                        'train': 0.156,
+                        'subway': 0.097,
+                        'motorcycle': 0.228,
+                        'bicycle': 0,
+                        'walk': 0,
+                        'flight-domestic': 0.253, // kg CO2 per passenger mile
+                        'flight-international': 0.181
+                    },
+                    'food': {
+                        'beef': 0.060, // kg CO2 per gram
+                        'lamb': 0.039,
+                        'pork': 0.012,
+                        'chicken': 0.006,
+                        'fish': 0.005,
+                        'eggs': 0.004,
+                        'dairy': 0.003,
+                        'rice': 0.004,
+                        'wheat': 0.001,
+                        'vegetables': 0.0005,
+                        'fruits': 0.0006,
+                        'nuts': 0.0003,
+                        'processed': 0.002
+                    },
+                    'energy': {
+                        'electricity': 0.429, // kg CO2 per kWh (US average)
+                        'natural-gas': 5.302, // kg CO2 per therm
+                        'heating-oil': 10.180, // kg CO2 per gallon
+                        'coal': 9.753,
+                        'propane': 5.757
+                    },
+                    'other': {
+                        'clothing': 8000, // kg CO2 per item (average)
+                        'electronics': 1000,
+                        'furniture': 5000,
+                        'waste': 0.1, // kg CO2 per kg waste
+                        'water': 0.0003 // kg CO2 per gallon
+                    }
+                };
+                
+                let total = 0;
+                const byCategory = {
+                    'transport': 0,
+                    'food': 0,
+                    'energy': 0,
+                    'other': 0
+                };
+                
+                // Calculate emissions for each activity
+                activities.forEach(activity => {
+                    const factor = emissionFactors[activity.category][activity.type];
+                    const emissions = activity.amount * factor;
+                    
+                    byCategory[activity.category] += emissions;
+                    total += emissions;
+                    
+                    // Update activity in list
+                    const activityItem = document.querySelector(`.activity-item[data-id="${activity.id}"] .activity-co2`);
+                    if (activityItem) {
+                        activityItem.textContent = `${emissions.toFixed(2)} kg CO₂`;
+                    }
+                });
+                
+                // Generate suggestions
+                const suggestions = generateSuggestions(activities, byCategory);
+                
+                return {
+                    total,
+                    byCategory,
+                    suggestions
+                };
+            }
+            
+            // Generate reduction suggestions
+            function generateSuggestions(activities, byCategory) {
+                const suggestions = [];
+                
+                // Transport suggestions
+                if (byCategory.transport > 0) {
+                    if (activities.some(a => a.category === 'transport' && a.type === 'car-gas')) {
+                        suggestions.push({
+                            title: "Use Public Transport",
+                            description: "Consider taking public transportation instead of driving for some trips. A full bus emits far less CO₂ per passenger than individual cars.",
+                            impact: "Could reduce transport emissions by 30-70%",
+                            category: "transport"
+                        });
+                        
+                        suggestions.push({
+                            title: "Carpool When Possible",
+                            description: "Sharing rides with others can significantly reduce your per-person carbon footprint from transportation.",
+                            impact: "Could reduce transport emissions by 50-75% when carpooling with 3+ people",
+                            category: "transport"
+                        });
+                    }
+                    
+                    if (byCategory.transport > 10) { // More than 10kg from transport
+                        suggestions.push({
+                            title: "Combine Trips",
+                            description: "Plan your errands to combine multiple stops into one trip. Cold starts (when the engine is cold) produce more emissions.",
+                            impact: "Could reduce transport emissions by 10-20%",
+                            category: "transport"
+                        });
+                    }
+                }
+                
+                // Food suggestions
+                if (byCategory.food > 0) {
+                    if (activities.some(a => a.category === 'food' && ['beef', 'lamb', 'pork'].includes(a.type))) {
+                        suggestions.push({
+                            title: "Reduce Red Meat",
+                            description: "Beef and lamb have particularly high carbon footprints. Consider substituting with chicken, fish, or plant-based proteins.",
+                            impact: "Could reduce food emissions by 50-90% per meal",
+                            category: "food"
+                        });
+                    }
+                    
+                    suggestions.push({
+                        title: "Buy Local and Seasonal",
+                        description: "Food that's transported long distances or grown in energy-intensive conditions has higher emissions.",
+                        impact: "Could reduce food emissions by 5-10%",
+                        category: "food"
+                    });
+                }
+                
+                // Energy suggestions
+                if (byCategory.energy > 0) {
+                    suggestions.push({
+                        title: "Lower Thermostat",
+                        description: "Reducing your heating by just 1°C can significantly cut energy use without much impact on comfort.",
+                        impact: "Could reduce heating emissions by 5-10%",
+                        category: "energy"
+                    });
+                    
+                    suggestions.push({
+                        title: "Switch to LED Bulbs",
+                        description: "LED bulbs use 75% less energy than incandescent bulbs and last much longer.",
+                        impact: "Could reduce lighting emissions by 75%",
+                        category: "energy"
+                    });
+                }
+                
+                // Other suggestions
+                if (byCategory.other > 0) {
+                    if (activities.some(a => a.category === 'other' && a.type === 'waste')) {
+                        suggestions.push({
+                            title: "Reduce Single-Use Items",
+                            description: "Choose reusable alternatives to disposable items like water bottles, shopping bags, and food containers.",
+                            impact: "Could reduce waste emissions by 20-50%",
+                            category: "other"
+                        });
+                    }
+                    
+                    suggestions.push({
+                        title: "Buy Second-Hand",
+                        description: "Purchasing used items reduces demand for new manufacturing and the associated emissions.",
+                        impact: "Could reduce emissions from goods by 50-100%",
+                        category: "other"
+                    });
+                }
+                
+                // General suggestions
+                suggestions.push({
+                    title: "Plant a Tree",
+                    description: "While reducing emissions is most important, planting trees can help offset some of your carbon footprint.",
+                    impact: "A mature tree can absorb about 21kg of CO₂ per year",
+                    category: "general"
+                });
+                
+                return suggestions;
+            }
+            
+            // Display results
+            function displayResults(footprint) {
+                // Total CO2
+                co2Total.textContent = `${footprint.total.toFixed(1)} kg`;
+                
+                // Comparison (average tree absorbs ~21kg CO2 per year)
+                const treesNeeded = (footprint.total / 21 * 365).toFixed(1);
+                co2Comparison.textContent = `That's equivalent to ${treesNeeded} trees needed to absorb your daily CO₂ for a year`;
+                
+                // By category
+                transportCo2.textContent = `${footprint.byCategory.transport.toFixed(1)} kg`;
+                foodCo2.textContent = `${footprint.byCategory.food.toFixed(1)} kg`;
+                energyCo2.textContent = `${footprint.byCategory.energy.toFixed(1)} kg`;
+                otherCo2.textContent = `${footprint.byCategory.other.toFixed(1)} kg`;
+                
+                // Suggestions
+                suggestionsList.innerHTML = '';
+                footprint.suggestions.forEach(suggestion => {
+                    const suggestionCard = document.createElement('div');
+                    suggestionCard.className = 'suggestion-card';
+                    
+                    suggestionCard.innerHTML = `
+                        <div class="suggestion-header">
+                            <div class="suggestion-icon">💡</div>
+                            <div class="suggestion-title">${suggestion.title}</div>
+                            <div class="suggestion-impact">${suggestion.impact}</div>
+                        </div>
+                        <div class="suggestion-desc">${suggestion.description}</div>
+                    `;
+                    
+                    suggestionsList.appendChild(suggestionCard);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
