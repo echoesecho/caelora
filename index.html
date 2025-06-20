@@ -1,1 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaterSaver AI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        h1 {
+            color: #0066cc;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0052a3;
+        }
+        .tips {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e6f7ff;
+            border-radius: 5px;
+            display: none;
+        }
+        .tip-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-left: 4px solid #0066cc;
+        }
+        .water-icon {
+            color: #0066cc;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="water-icon">💧</span> WaterSaver AI</h1>
+        <p>Enter your water usage and habits to get personalized tips for reducing waste.</p>
+        
+        <div class="form-group">
+            <label for="gallons">Daily Water Usage (gallons):</label>
+            <input type="number" id="gallons" placeholder="e.g., 50" min="1">
+        </div>
+        
+        <div class="form-group">
+            <label>Your Water Habits (select all that apply):</label>
+            <div>
+                <input type="checkbox" id="shower" name="habits" value="long showers">
+                <label for="shower">Long showers (10+ minutes)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="faucet" name="habits" value="running faucet">
+                <label for="faucet">Leaving faucet running while brushing/washing</label>
+            </div>
+            <div>
+                <input type="checkbox" id="laundry" name="habits" value="frequent laundry">
+                <label for="laundry">Doing laundry frequently (small loads)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="dishes" name="habits" value="hand wash dishes">
+                <label for="dishes">Hand washing dishes (not using full dishwasher)</label>
+            </div>
+            <div>
+                <input type="checkbox" id="garden" name="habits" value="garden watering">
+                <label for="garden">Watering garden during daytime</label>
+            </div>
+        </div>
+        
+        <button onclick="generateTips()">Get Water-Saving Tips</button>
+        
+        <div id="tips" class="tips">
+            <h3>Your Personalized Water-Saving Tips:</h3>
+            <div id="tip-list"></div>
+        </div>
+    </div>
 
+    <script>
+        function generateTips() {
+            const gallons = parseFloat(document.getElementById('gallons').value);
+            const checkboxes = document.querySelectorAll('input[name="habits"]:checked');
+            const habits = Array.from(checkboxes).map(cb => cb.value);
+            
+            // Clear previous tips
+            const tipList = document.getElementById('tip-list');
+            tipList.innerHTML = '';
+            
+            // Generate tips based on input
+            const tips = [];
+            
+            // General usage tips
+            if (gallons > 80) {
+                tips.push("🚨 Your water usage is very high! Let's find ways to reduce it.");
+            } else if (gallons > 50) {
+                tips.push("⚠️ Your usage is above average. Try these tips to save water.");
+            }
+            
+            // Habit-specific tips
+            if (habits.includes('long showers')) {
+                tips.push("🚿 Reduce shower time by 2 minutes to save ~5 gallons per shower. Try using a shower timer!");
+            }
+            
+            if (habits.includes('running faucet')) {
+                tips.push("💧 Turn off the faucet while brushing teeth or washing hands to save ~4 gallons per minute.");
+            }
+            
+            if (habits.includes('frequent laundry')) {
+                tips.push("👕 Wait until you have full loads before running the washing machine. This can save 15-45 gallons per load!");
+            }
+            
+            if (habits.includes('hand wash dishes')) {
+                tips.push("🍽️ Use your dishwasher (when full) instead of hand washing. Modern dishwashers use less water than hand washing.");
+            }
+            
+            if (habits.includes('garden watering')) {
+                tips.push("🌱 Water your garden early morning or evening to reduce evaporation. Consider drip irrigation for 30% more efficiency.");
+            }
+            
+            // General conservation tips (always shown)
+            tips.push("🔧 Check for leaks! A dripping faucet can waste 20 gallons per day.");
+            tips.push("🌧️ Install rain barrels to collect water for outdoor use.");
+            
+            // Display tips
+            tips.forEach(tip => {
+                const tipElement = document.createElement('div');
+                tipElement.className = 'tip-item';
+                tipElement.innerHTML = tip;
+                tipList.appendChild(tipElement);
+            });
+            
+            // Show tips section
+            document.getElementById('tips').style.display = 'block';
+            
+            // Scroll to tips
+            document.getElementById('tips').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
