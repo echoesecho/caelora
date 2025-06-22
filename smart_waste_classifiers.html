@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Waste Classifier</title>
+    <title>Keras Waste Classifier</title>
 
     <style>
         /* General Body & Root Styling */
@@ -306,7 +306,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Smart Waste Classifier</h1>
+        <h1>Keras Waste Classifier</h1>
 
         <div class="upload-section card">
             <h2>Upload or Paste Waste Image</h2>
@@ -344,7 +344,22 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
     <script>
+        // --- Configuration for your Keras model ---
+        // IMPORTANT: Update this URL to point to your converted Keras model's model.json file.
+        // This 'model.json' file should be in the same directory as your index.html,
+        // OR in a subfolder (like './web_model/model.json' if you converted to 'web_model' folder)
+        const MODEL_URL = './keras_model.h5'; // ASSUMES model.json is in the same directory as index.html
+
+        // IMPORTANT: Adjust this to match the input image size your Keras model expects (e.g., 224 for MobileNet, 150 for custom)
+        const IMAGE_SIZE = 224; // Common default, but adjust to YOUR model's input size
+
+        // IMPORTANT: These labels MUST match the order in your 'labels.txt' file
+        // and the output order of your Keras model.
+        let CLASS_LABELS = []; // Will be loaded from labels.txt
+
         // Get references to HTML elements
         const imageUpload = document.getElementById('imageUpload');
         const pasteImageBtn = document.getElementById('pasteImageBtn');
@@ -355,6 +370,8 @@
         const disposalTips = document.getElementById('disposalTips');
         const historyList = document.getElementById('historyList');
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        let model; // To hold the loaded TensorFlow.js model
 
         // Function to handle displaying an image
         function displayImage(imageUrl) {
@@ -385,9 +402,6 @@
         // Event listener for pasting image from clipboard
         pasteImageBtn.addEventListener('click', async () => {
             try {
-                // Clipboard API requires user permission and a secure context (HTTPS)
-                // If running locally, you might need to enable a flag in your browser (e.g., Chrome: chrome://flags/#unsafely-treat-as-secure-origin)
-                // or serve via a local web server (like `python -m http.server`) for it to work.
                 const clipboardItems = await navigator.clipboard.read();
                 let imageFound = false;
                 for (const clipboardItem of clipboardItems) {
@@ -413,71 +427,109 @@
             }
         });
 
-        // --- AI Model and Classification ---
-        // These libraries are crucial for the AI model to work.
-        // They are dynamically loaded to keep everything in one file.
-        let model; // To hold the loaded Teachable Machine model
-        // IMPORTANT: Replace with YOUR Teachable Machine model URL
-        const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/";
+        // --- Keras Model Loading and Prediction ---
 
-        async function loadWasteModel() {
+        async function loadLabels() {
             try {
-                const modelURL = TM_URL + "model.json";
-                const metadataURL = TM_URL + "metadata.json";
-                // tmImage comes from the dynamically loaded Teachable Machine library
-                model = await tmImage.load(modelURL, metadataURL);
-                console.log("Teachable Machine Model Loaded Successfully!");
-                // Optionally, update a status message on the page for the user
-                // e.g., classificationResult.textContent = "AI Model Ready! Upload an image to classify.";
+                const response = await fetch('./labels.txt'); // ASSUMES labels.txt is in the same directory
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                CLASS_LABELS = text.split('\n').map(label => label.trim()).filter(label => label.length > 0);
+                console.log("Labels loaded:", CLASS_LABELS);
             } catch (error) {
-                console.error("Failed to load Teachable Machine model:", error);
-                classificationResult.textContent = "Error: AI model failed to load. Check console for details.";
-                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model could not be loaded. Please ensure your internet connection is active and the model URL is correct.</p>';
+                console.error("Failed to load labels.txt:", error);
+                alert("Error loading labels.txt. Please ensure it's in the correct directory and formatted correctly.");
             }
         }
 
-        // Function to get image from previewImage element for classification
-        async function getImageForClassification() {
-            if (previewImage.style.display === 'block' && previewImage.src !== '#') {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.src = previewImage.src;
-                });
+        async function loadKerasModel() {
+            classificationResult.textContent = "Loading AI model...";
+            disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please wait while the AI model loads...</p>';
+
+            try {
+                // Ensure labels are loaded before attempting to load the model
+                await loadLabels();
+
+                // tf.loadLayersModel is used for Keras models converted to TensorFlow.js format
+                model = await tf.loadLayersModel(MODEL_URL);
+                console.log("Keras Model Loaded Successfully!");
+                classificationResult.textContent = "AI Model Ready! Upload an image to classify.";
+            } catch (error) {
+                console.error("Failed to load Keras model:", error);
+                classificationResult.textContent = "Error: AI model failed to load. Check console for details.";
+                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model could not be loaded. Please ensure your internet connection is active, the model URL is correct, and the model is converted to TensorFlow.js format.</p>';
             }
-            return null;
+        }
+
+        // Preprocess the image for the Keras model
+        async function preprocessImage(imageElement) {
+            return tf.tidy(() => {
+                let imgTensor = tf.browser.fromPixels(imageElement); // Convert image to tensor
+
+                // Resize image to the expected input size of your model
+                imgTensor = tf.image.resizeBilinear(imgTensor, [IMAGE_SIZE, IMAGE_SIZE]);
+
+                // Convert to float32
+                imgTensor = imgTensor.toFloat();
+
+                // Normalize pixel values. Common for Keras is to divide by 255.0
+                // If your model expects values in [-1, 1], you would do:
+                // imgTensor = imgTensor.div(tf.scalar(127.5)).sub(tf.scalar(1));
+                imgTensor = imgTensor.div(tf.scalar(255.0)); // Normalize to [0, 1]
+
+                // Add a batch dimension (e.g., from [HEIGHT, WIDTH, CHANNELS] to [1, HEIGHT, WIDTH, CHANNELS])
+                imgTensor = imgTensor.expandDims(0);
+                return imgTensor;
+            });
         }
 
         classifyBtn.addEventListener('click', async () => {
             classificationResult.textContent = "Classifying...";
             disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Processing your image...</p>';
 
-            const image = await getImageForClassification();
-            if (!image) {
+            const imageElement = previewImage; // Use the actual img element
+            if (!imageElement || imageElement.style.display === 'none' || imageElement.src === '#') {
                 classificationResult.textContent = "No image to classify.";
                 disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please select or paste an image first.</p>';
                 return;
             }
 
             if (!model) {
-                // If model is null/undefined, it means it hasn't loaded yet or failed to load
                 classificationResult.textContent = "AI model not loaded yet. Please wait a moment, then try again.";
                 disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model is still loading or failed to load. Cannot classify.</p>';
                 return;
             }
 
+            if (CLASS_LABELS.length === 0) {
+                 classificationResult.textContent = "Error: Class labels not loaded.";
+                 disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Cannot classify without class labels. Check console for errors in loading labels.txt.</p>';
+                 return;
+            }
+
+
             try {
-                const prediction = await model.predict(image);
+                // Preprocess the image
+                const preprocessedImage = await preprocessImage(imageElement);
+
+                // Make prediction
+                const prediction = model.predict(preprocessedImage);
+                const probabilities = await prediction.data(); // Get raw probabilities as a flat array
+                tf.dispose(preprocessedImage); // Clean up tensor memory
 
                 let maxProbability = 0;
-                let predictedClass = "Unknown";
+                let predictedClassIndex = -1;
 
-                prediction.forEach(p => {
-                    if (p.probability > maxProbability) {
-                        maxProbability = p.probability;
-                        predictedClass = p.className;
+                // Find the class with the highest probability
+                for (let i = 0; i < probabilities.length; i++) {
+                    if (probabilities[i] > maxProbability) {
+                        maxProbability = probabilities[i];
+                        predictedClassIndex = i;
                     }
-                });
+                }
+
+                const predictedClass = CLASS_LABELS[predictedClassIndex] || "Unknown";
 
                 classificationResult.textContent = `Classified as: ${predictedClass} (${(maxProbability * 100).toFixed(2)}%)`;
                 displayDisposalTips(predictedClass);
@@ -496,7 +548,7 @@
             let tips = '';
 
             switch (classification.toLowerCase()) {
-                case 'recyclable': // Ensure this matches your Teachable Machine class name exactly
+                case 'recyclable': // Ensure this matches one of your CLASS_LABELS
                     tips = `
                         <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Clean it:</b> Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
@@ -505,7 +557,7 @@
                         <p style="margin-bottom: 10px; line-height: 1.6;">4. <b>No Contaminants:</b> Avoid putting items like plastic bags (unless specified), food-soiled paper, or hazardous waste in recycling.</p>
                     `;
                     break;
-                case 'organic': // Ensure this matches your Teachable Machine class name exactly
+                case 'organic': // Ensure this matches one of your CLASS_LABELS
                     tips = `
                         <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Compost if possible:</b> Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
@@ -513,7 +565,7 @@
                         <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Avoid non-compostables:</b> Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
                     `;
                     break;
-                case 'general': // Ensure this matches your Teachable Machine class name exactly
+                case 'general': // Ensure this matches one of your CLASS_LABELS
                     tips = `
                         <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Last Resort:</b> This category is for items that cannot be recycled or composted.</p>
@@ -521,10 +573,14 @@
                         <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Minimize:</b> Try to reduce general waste by opting for reusable items and choosing products with less packaging.</p>
                     `;
                     break;
+                // Add more cases here if you have other specific classes like 'Hazardous'
+                // case 'hazardous':
+                //     tips = `... your tips for hazardous waste ...`;
+                //     break;
                 default:
                     tips = `
                         <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">Classification uncertain. Please consult your local waste management guide for proper disposal of this item.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">Classification uncertain or specific tips not available. Please consult your local waste management guide for proper disposal of this item.</p>
                     `;
                     break;
             }
@@ -575,20 +631,8 @@
 
         // Initialize on page load
         window.onload = async () => {
-            // Dynamically load TensorFlow.js and Teachable Machine libraries
-            // This is critical for the AI model to function and needs an internet connection.
-            const tfjsScript = document.createElement('script');
-            tfjsScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js";
-            tfjsScript.async = true; // Load asynchronously to not block page rendering
-            tfjsScript.onload = () => {
-                const tmImageScript = document.createElement('script');
-                tmImageScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js";
-                tmImageScript.async = true; // Load asynchronously
-                tmImageScript.onload = loadWasteModel; // Load your model AFTER tmImage is loaded
-                document.head.appendChild(tmImageScript);
-            };
-            document.head.appendChild(tfjsScript);
-
+            // Load the Keras model (converted to TF.js format) and labels
+            await loadKerasModel(); // Wait for model and labels to load
             loadHistory(); // Load history from local storage when the page loads
         };
     </script>
