@@ -88,6 +88,9 @@
         // Event listener for pasting image from clipboard
         pasteImageBtn.addEventListener('click', async () => {
             try {
+                // Clipboard API requires user permission and a secure context (HTTPS)
+                // If running locally, you might need to enable a flag in your browser (e.g., Chrome: chrome://flags/#unsafely-treat-as-secure-origin)
+                // or serve via a local web server (like `python -m http.server`) for it to work.
                 const clipboardItems = await navigator.clipboard.read();
                 let imageFound = false;
                 for (const clipboardItem of clipboardItems) {
@@ -113,24 +116,25 @@
             }
         });
 
-        // --- Placeholder for AI Model and Classification (Requires TensorFlow.js) ---
+        // --- AI Model and Classification ---
         // These libraries are crucial for the AI model to work.
         // They are dynamically loaded to keep everything in one file.
         let model; // To hold the loaded Teachable Machine model
-        const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/"; // Your Teachable Machine model URL
+        const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/"; // <--- IMPORTANT: Replace with YOUR Teachable Machine model URL
 
         async function loadWasteModel() {
             try {
                 const modelURL = TM_URL + "model.json";
                 const metadataURL = TM_URL + "metadata.json";
-                // Assuming tmImage is available from the Teachable Machine library loaded below
+                // tmImage comes from the dynamically loaded Teachable Machine library
                 model = await tmImage.load(modelURL, metadataURL);
                 console.log("Teachable Machine Model Loaded Successfully!");
-                // You could update a status message on the page here, e.g., "AI Model Ready!"
+                // Optionally, update a status message on the page for the user
+                // e.g., classificationResult.textContent = "AI Model Ready! Upload an image to classify.";
             } catch (error) {
                 console.error("Failed to load Teachable Machine model:", error);
-                // Optionally alert the user or show a message on the page
-                // alert("Failed to load the AI model. Classification will not work.");
+                classificationResult.textContent = "Error: AI model failed to load. Check console for details.";
+                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model could not be loaded. Please ensure your internet connection is active and the model URL is correct.</p>';
             }
         }
 
@@ -158,13 +162,13 @@
             }
 
             if (!model) {
-                classificationResult.textContent = "AI model not loaded. Please wait or check console for errors.";
+                // If model is null/undefined, it means it hasn't loaded yet or failed to load
+                classificationResult.textContent = "AI model not loaded yet. Please wait a moment, then try again.";
                 disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model is still loading or failed to load. Cannot classify.</p>';
                 return;
             }
 
             try {
-                // Perform prediction using the loaded Teachable Machine model
                 const prediction = await model.predict(image);
 
                 let maxProbability = 0;
@@ -184,17 +188,17 @@
             } catch (error) {
                 console.error("Error during classification:", error);
                 classificationResult.textContent = "Error classifying image. Please try again.";
-                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>An error occurred during classification. Check console for details.</p>';
+                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>An error occurred during classification. Check browser console for details.</p>';
             }
         });
 
-        // --- Disposal Tips Logic (This is the section you showed in the image) ---
+        // --- Disposal Tips Logic ---
         function displayDisposalTips(classification) {
             disposalTips.innerHTML = ''; // Clear previous tips
             let tips = '';
 
             switch (classification.toLowerCase()) {
-                case 'recyclable': // Ensure this matches your Teachable Machine class name
+                case 'recyclable': // Ensure this matches your Teachable Machine class name exactly
                     tips = `
                         <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Clean it:</b> Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
@@ -203,7 +207,7 @@
                         <p style="margin-bottom: 10px; line-height: 1.6;">4. <b>No Contaminants:</b> Avoid putting items like plastic bags (unless specified), food-soiled paper, or hazardous waste in recycling.</p>
                     `;
                     break;
-                case 'organic': // Ensure this matches your Teachable Machine class name
+                case 'organic': // Ensure this matches your Teachable Machine class name exactly
                     tips = `
                         <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Compost if possible:</b> Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
@@ -211,7 +215,7 @@
                         <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Avoid non-compostables:</b> Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
                     `;
                     break;
-                case 'general': // Ensure this matches your Teachable Machine class name
+                case 'general': // Ensure this matches your Teachable Machine class name exactly
                     tips = `
                         <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Last Resort:</b> This category is for items that cannot be recycled or composted.</p>
@@ -242,9 +246,9 @@
             history.unshift({ classification, probability, timestamp });
             localStorage.setItem('wasteHistory', JSON.stringify(history));
 
-            // Remove the "No history yet" placeholder if present
-            if (historyList.children.length > 1 && historyList.children[historyList.children.length - 1].textContent.includes("No history yet")) {
-                historyList.removeChild(historyList.children[historyList.children.length - 1]);
+            // Remove the "No history yet" placeholder if present and there's more than one item
+            if (historyList.children.length > 1 && historyList.lastElementChild && historyList.lastElementChild.textContent.includes("No history yet")) {
+                historyList.removeChild(historyList.lastElementChild);
             }
         }
 
@@ -274,13 +278,14 @@
         // Initialize on page load
         window.onload = async () => {
             // Dynamically load TensorFlow.js and Teachable Machine libraries
-            // This ensures they are available before trying to load your model.
-            // This might take a moment depending on internet speed.
+            // This is critical for the AI model to function.
             const tfjsScript = document.createElement('script');
             tfjsScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js";
+            tfjsScript.async = true; // Load asynchronously to not block parsing
             tfjsScript.onload = () => {
                 const tmImageScript = document.createElement('script');
                 tmImageScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js";
+                tmImageScript.async = true; // Load asynchronously
                 tmImageScript.onload = loadWasteModel; // Load your model AFTER tmImage is loaded
                 document.head.appendChild(tmImageScript);
             };
