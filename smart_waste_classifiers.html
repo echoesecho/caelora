@@ -3,52 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Waste Classifier</title>
+    <title>Smart Waste Classifier - Your Eco-Friend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        /* Basic CSS for layout and styling */
-        body { font-family: sans-serif; margin: 20px; }
-        #camera-feed, #captured-image { max-width: 100%; height: auto; border: 1px solid #ccc; margin-bottom: 10px; }
-        #classification-result { font-size: 1.2em; font-weight: bold; margin-top: 15px; }
-        #disposal-guidance { margin-top: 10px; padding: 10px; border: 1px dashed #eee; background-color: #f9f9f9; }
-        #history-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .history-item { display: flex; align-items: center; margin-bottom: 10px; padding: 5px; border: 1px solid #ddd; }
-        .history-item img { width: 60px; height: 60px; object-fit: cover; margin-right: 10px; }
+        /* Basic Reset & Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5; /* Light grey background */
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #28a745; /* Green header */
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        main {
+            flex-grow: 1; /* Allows main content to take available space */
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Space between sections */
+        }
+
+        section {
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+        }
+        section h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            color: #28a745;
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007bff; /* Blue button */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button#captureButton { background-color: #ffc107; color: #333; } /* Yellow for camera */
+        button#captureButton:hover { background-color: #e0a800; }
+        button#closeCameraButton, button#processCameraButton { background-color: #6c757d; } /* Grey for camera actions */
+        button#closeCameraButton:hover, button#processCameraButton:hover { background-color: #5a6268; }
+        button#clearHistoryButton { background-color: #dc3545; } /* Red for delete */
+        button#clearHistoryButton:hover { background-color: #c82333; }
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+
+
+        /* Image/Video Display */
+        #camera-feed, #captured-image, #previewImage {
+            display: block; /* Ensures they take full width */
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        #camera-feed.hidden, #captured-image.hidden, #previewImage.hidden {
+            display: none !important;
+        }
+
+
+        /* Results Section */
+        #results-section {
+            text-align: center;
+        }
+        #classification-result {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #28a745; /* Green for classified result */
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 15px auto;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #disposal-guidance {
+            background-color: #e6f7ff; /* Light blue background for guidance */
+            border-left: 5px solid #007bff;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        #disposal-guidance p { margin-bottom: 10px; }
+        #disposal-guidance ul { list-style-type: disc; margin-left: 20px; padding-left: 0; }
+        #disposal-guidance li { margin-bottom: 5px; }
+        #disposal-guidance strong { color: #0056b3; } /* Darker blue for strong text */
+        #disposal-guidance small { color: #666; font-style: italic; }
+
+        /* Classification Specific Colors (for dynamic styling with JS) */
+        .category-recyclable { color: #28a745; } /* Green */
+        .category-organic { color: #8B4513; } /* Brown */
+        .category-general { color: #6c757d; } /* Grey */
+
+
+        /* History Section */
+        #history-list {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Responsive grid */
+            gap: 15px;
+        }
+        .history-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .history-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .history-item img {
+            width: 100%; /* Fill item width */
+            height: 120px; /* Fixed height for consistency */
+            object-fit: cover; /* Ensures image covers area without distortion */
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+        }
+        .history-item span {
+            font-size: 0.9em;
+            color: #555;
+            word-break: break-word; /* Prevents long text from overflowing */
+        }
+        .history-item .category {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            background-color: #333;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            main {
+                margin: 20px 15px;
+                padding: 15px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%; /* Full width buttons on small screens */
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Smart Waste Classifier</h1>
+    <header>
+        <h1>Smart Waste Classifier</h1>
+        <p>Your guide to responsible waste disposal</p>
+    </header>
 
-    <section>
-        <h2>Upload or Capture Waste Image</h2>
-        <input type="file" id="imageUpload" accept="image/*">
-        <button id="captureButton">Open Camera</button>
-        <button id="closeCameraButton" style="display:none;">Close Camera</button>
-
-        <video id="camera-feed" autoplay style="display:none;"></video>
-        <canvas id="captured-image" style="display:none;"></canvas>
-        <button id="processCameraButton" style="display:none;">Analyze Photo</button>
-
-        <img id="previewImage" src="" alt="Image Preview" style="max-width: 300px; display: none;">
-        <button id="classifyButton" style="display: none;">Classify Waste</button>
-    </section>
-
-    <section id="results-section" style="display:none;">
-        <h2>Classification Result:</h2>
-        <p id="classification-result"></p>
-        <div id="disposal-guidance">
+    <main>
+        <section>
+            <h2>Capture or Upload Waste Item</h2>
+            <div class="button-group">
+                <input type="file" id="imageUpload" accept="image/*">
+                <button id="captureButton">Open Camera</button>
             </div>
-    </section>
 
-    <section id="history-section">
-        <h2>History</h2>
-        <button id="clearHistoryButton">Clear History</button>
-        <div id="history-list">
+            <video id="camera-feed" class="hidden" autoplay></video>
+            <canvas id="captured-image" class="hidden"></canvas>
+
+            <div class="button-group" style="justify-content: center;">
+                <button id="processCameraButton" class="hidden">Analyze Photo</button>
+                <button id="closeCameraButton" class="hidden">Close Camera</button>
             </div>
-    </section>
+
+            <img id="previewImage" src="" alt="Waste Image Preview" class="hidden">
+            <button id="classifyButton" class="hidden" style="display:block; margin: 20px auto 0;">Classify Waste</button>
+        </section>
+
+        <section id="results-section" class="hidden">
+            <h2>Classification Result</h2>
+            <div class="loading-spinner" id="loadingSpinner"></div>
+            <p id="classification-result"></p>
+            <div id="disposal-guidance">
+                </div>
+        </section>
+
+        <section id="history-section">
+            <h2>Your Disposal History</h2>
+            <button id="clearHistoryButton">Clear History</button>
+            <div id="history-list">
+                </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Smart Waste Classifier. All rights reserved.</p>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script>
-        // JavaScript for handling file upload, camera, classification, and history
         const imageUpload = document.getElementById('imageUpload');
         const previewImage = document.getElementById('previewImage');
         const classifyButton = document.getElementById('classifyButton');
@@ -57,6 +281,7 @@
         const historyList = document.getElementById('history-list');
         const clearHistoryButton = document.getElementById('clearHistoryButton');
         const resultsSection = document.getElementById('results-section');
+        const loadingSpinner = document.getElementById('loadingSpinner');
 
         const captureButton = document.getElementById('captureButton');
         const closeCameraButton = document.getElementById('closeCameraButton');
@@ -65,17 +290,24 @@
         const processCameraButton = document.getElementById('processCameraButton');
         const ctx = capturedImageCanvas.getContext('2d');
 
+        let mediaStream;
         let model; // To hold the loaded TensorFlow.js model
+
+        // Helper to toggle 'hidden' class
+        const toggleVisibility = (element, show) => {
+            if (show) {
+                element.classList.remove('hidden');
+            } else {
+                element.classList.add('hidden');
+            }
+        };
 
         // --- Load AI Model (Example - Replace with your actual model loading) ---
         async function loadModel() {
-            // If using a pre-trained model like MobileNet for demonstration
-            // model = await tf.loadGraphModel('https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2', { fromTFHub: true });
-            // For your custom waste classifier, load your converted TF.js model:
+            // In a real application, you'd load your custom trained model here:
             // model = await tf.loadLayersModel('path/to/your/model.json');
             console.log("AI model loaded (placeholder).");
-            // For this example, we'll simulate a model
-            return true;
+            return true; // Indicate success
         }
 
         // --- Image Handling ---
@@ -84,36 +316,41 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    toggleVisibility(previewImage, true);
                     previewImage.src = e.target.result;
-                    previewImage.style.display = 'block';
-                    classifyButton.style.display = 'block';
-                    // Hide camera elements if file is uploaded
-                    cameraFeed.style.display = 'none';
-                    capturedImageCanvas.style.display = 'none';
-                    processCameraButton.style.display = 'none';
-                    closeCameraButton.style.display = 'none';
-                    captureButton.style.display = 'block'; // Show "Open Camera" again
+                    toggleVisibility(classifyButton, true);
+
+                    // Hide camera UI if file is uploaded
+                    toggleVisibility(cameraFeed, false);
+                    toggleVisibility(capturedImageCanvas, false);
+                    toggleVisibility(processCameraButton, false);
+                    toggleVisibility(closeCameraButton, false);
+                    toggleVisibility(captureButton, true); // Show "Open Camera" again
+                    if (mediaStream) { // Stop camera if it was active
+                        mediaStream.getTracks().forEach(track => track.stop());
+                        cameraFeed.srcObject = null;
+                    }
                 };
                 reader.readAsDataURL(file);
             } else {
-                previewImage.style.display = 'none';
-                classifyButton.style.display = 'none';
+                toggleVisibility(previewImage, false);
+                toggleVisibility(classifyButton, false);
             }
         });
 
         // --- Camera Handling ---
-        let mediaStream;
         captureButton.addEventListener('click', async () => {
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); // Prefer back camera
                 cameraFeed.srcObject = mediaStream;
-                cameraFeed.style.display = 'block';
-                capturedImageCanvas.style.display = 'none'; // Hide canvas initially
-                processCameraButton.style.display = 'block';
-                closeCameraButton.style.display = 'block';
-                captureButton.style.display = 'none'; // Hide "Open Camera" button
-                previewImage.style.display = 'none'; // Hide uploaded image preview
-                classifyButton.style.display = 'none'; // Hide classify button for uploaded image
+                toggleVisibility(cameraFeed, true);
+                toggleVisibility(capturedImageCanvas, false); // Hide canvas initially
+                toggleVisibility(processCameraButton, true);
+                toggleVisibility(closeCameraButton, true);
+                toggleVisibility(captureButton, false); // Hide "Open Camera" button
+                toggleVisibility(previewImage, false); // Hide uploaded image preview
+                toggleVisibility(classifyButton, false); // Hide classify button for uploaded image
+                toggleVisibility(resultsSection, false); // Clear previous results
             } catch (err) {
                 console.error("Error accessing camera: ", err);
                 alert("Could not access camera. Please ensure permissions are granted.");
@@ -124,42 +361,42 @@
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 cameraFeed.srcObject = null;
-                cameraFeed.style.display = 'none';
-                capturedImageCanvas.style.display = 'none';
-                processCameraButton.style.display = 'none';
-                closeCameraButton.style.display = 'none';
-                captureButton.style.display = 'block'; // Show "Open Camera" button again
-                previewImage.style.display = 'none';
-                classifyButton.style.display = 'none';
+                toggleVisibility(cameraFeed, false);
+                toggleVisibility(capturedImageCanvas, false);
+                toggleVisibility(processCameraButton, false);
+                toggleVisibility(closeCameraButton, false);
+                toggleVisibility(captureButton, true); // Show "Open Camera" button again
+                toggleVisibility(previewImage, false);
+                toggleVisibility(classifyButton, false);
             }
         });
 
         processCameraButton.addEventListener('click', () => {
-            // Set canvas dimensions to match video feed
+            // Set canvas dimensions to match video feed for a good quality capture
             capturedImageCanvas.width = cameraFeed.videoWidth;
             capturedImageCanvas.height = cameraFeed.videoHeight;
             ctx.drawImage(cameraFeed, 0, 0, capturedImageCanvas.width, capturedImageCanvas.height);
-            capturedImageCanvas.style.display = 'block'; // Show the captured image
-            
-            // Get image data from canvas and simulate classification
-            const imageDataURL = capturedImageCanvas.toDataURL('image/jpeg');
+            toggleVisibility(capturedImageCanvas, true); // Show the captured image
+
+            // Get image data from canvas and trigger classification
+            const imageDataURL = capturedImageCanvas.toDataURL('image/jpeg', 0.9); // 0.9 quality for JPEG
             simulateClassification(imageDataURL);
 
             // Optionally, stop camera feed after capture
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 cameraFeed.srcObject = null;
-                cameraFeed.style.display = 'none';
-                closeCameraButton.style.display = 'none';
-                processCameraButton.style.display = 'none';
-                captureButton.style.display = 'block'; // Show "Open Camera" again
+                toggleVisibility(cameraFeed, false);
+                toggleVisibility(closeCameraButton, false);
+                toggleVisibility(processCameraButton, false);
+                toggleVisibility(captureButton, true); // Show "Open Camera" again
             }
         });
 
 
         // --- Classification Logic (Simulated for this HTML example) ---
         classifyButton.addEventListener('click', () => {
-            if (previewImage.src) {
+            if (previewImage.src && !previewImage.classList.contains('hidden')) {
                 simulateClassification(previewImage.src);
             } else {
                 alert("Please upload an image or capture one from the camera first.");
@@ -168,23 +405,32 @@
 
         // Simulates AI/ML classification (replace with actual model inference)
         async function simulateClassification(imageDataURL) {
-            resultsSection.style.display = 'block';
-            classificationResult.textContent = 'Classifying...';
+            toggleVisibility(resultsSection, true);
+            classificationResult.textContent = ''; // Clear previous text
             disposalGuidance.innerHTML = '';
+            toggleVisibility(loadingSpinner, true); // Show spinner
+
+            // In a real scenario, you'd preprocess the image (resize, normalize)
+            // if you are using client-side TF.js model.
+            // If sending to backend, just send imageDataURL or a Blob.
 
             // Simulate a delay for classification
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate AI processing time
 
-            // In a real scenario, you'd pass imageDataURL to your TF.js model or send to a backend API
             // For demonstration, we'll randomly pick a category
             const categories = ['Recyclable', 'Organic', 'General'];
             const predictedCategory = categories[Math.floor(Math.random() * categories.length)];
 
+            toggleVisibility(loadingSpinner, false); // Hide spinner
             displayClassificationResult(predictedCategory, imageDataURL);
         }
 
         function displayClassificationResult(category, imageDataURL) {
             classificationResult.textContent = `Classified as: ${category}`;
+            // Add category-specific class for styling
+            classificationResult.className = ''; // Clear previous classes
+            classificationResult.classList.add('category-' + category.toLowerCase());
+
             let guidance = '';
 
             switch (category) {
@@ -241,7 +487,7 @@
                 category: category,
                 timestamp: new Date().toLocaleString()
             });
-            // Keep history to a reasonable size, e.g., last 10-20 items
+            // Keep history to a reasonable size, e.g., last 20 items
             if (history.length > 20) {
                 history = history.slice(0, 20);
             }
@@ -254,7 +500,7 @@
             const history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
 
             if (history.length === 0) {
-                historyList.innerHTML = '<p>No history yet.</p>';
+                historyList.innerHTML = '<p style="text-align: center; color: #777;">No history yet. Start classifying!</p>';
                 return;
             }
 
@@ -266,11 +512,16 @@
                 img.src = item.image;
                 img.alt = item.category;
 
-                const textSpan = document.createElement('span');
-                textSpan.textContent = `${item.category} - ${item.timestamp}`;
+                const categorySpan = document.createElement('span');
+                categorySpan.classList.add('category', 'category-' + item.category.toLowerCase());
+                categorySpan.textContent = item.category;
+
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = item.timestamp;
 
                 historyItemDiv.appendChild(img);
-                historyItemDiv.appendChild(textSpan);
+                historyItemDiv.appendChild(categorySpan);
+                historyItemDiv.appendChild(timeSpan);
                 historyList.appendChild(historyItemDiv);
             });
         }
