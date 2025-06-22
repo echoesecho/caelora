@@ -4,46 +4,343 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Waste Classifier</title>
+
+    <style>
+        /* General Body & Root Styling */
+        :root {
+            --primary-green: #4CAF50; /* A vibrant green for main actions */
+            --primary-green-dark: #45a049;
+            --blue-paste: #2196F3; /* A friendly blue for paste */
+            --blue-paste-dark: #1976D2;
+            --red-clear: #F44336; /* A clear red for clear actions */
+            --red-clear-dark: #D32F2F;
+            --background-light: #F0F2F5; /* Light background for the page */
+            --card-background: #FFFFFF; /* White for card backgrounds */
+            --text-dark: #333;
+            --text-medium: #555;
+            --text-light: #777;
+            --border-light: #EEE;
+            --shadow-soft: rgba(0, 0, 0, 0.1);
+            --border-dashed: #ADD8E6; /* Light blue for dashed border */
+            --result-bg-light: #E8F5E9; /* Very light green for result section */
+            --result-text-dark: #1B5E20; /* Darker green for result text */
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align content to the top */
+            min-height: 100vh;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--text-medium);
+        }
+
+        /* Main Container */
+        .container {
+            background-color: var(--card-background);
+            padding: 35px;
+            border-radius: 15px; /* More rounded corners */
+            box-shadow: 0 10px 30px var(--shadow-soft); /* Enhanced shadow */
+            text-align: center;
+            width: 100%;
+            max-width: 700px; /* Slightly wider */
+            margin: 20px 0;
+        }
+
+        h1 {
+            color: var(--text-dark);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        h2 {
+            color: var(--text-dark);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        /* Card Styling for Sections */
+        .card {
+            background-color: var(--card-background);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+            margin-bottom: 25px;
+            border: 1px solid var(--border-light); /* Light border */
+        }
+
+        /* Specific Section Styles */
+        .upload-section {
+            border: 2px dashed var(--border-dashed); /* Light blue dashed border */
+            background-color: #F8FDFF; /* Very light blue background */
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Space between buttons */
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            margin-top: 20px;
+        }
+
+        .action-button {
+            display: inline-block;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px; /* Slightly more rounded buttons */
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            text-decoration: none; /* For label acting as button */
+        }
+
+        .action-button:active {
+            transform: translateY(1px); /* Slight press effect */
+        }
+
+        .upload-button {
+            background-color: var(--primary-green);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .upload-button:hover {
+            background-color: var(--primary-green-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .paste-button {
+            background-color: var(--blue-paste);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .paste-button:hover {
+            background-color: var(--blue-paste-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .hidden-input {
+            display: none; /* Hide the actual file input */
+        }
+
+        .upload-hint {
+            margin-top: 20px;
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+
+        /* Image Preview */
+        .image-preview {
+            min-height: 250px; /* Taller preview area */
+            display: flex;
+            flex-direction: column; /* Stack image and text */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-color: #FDFDFD;
+            position: relative;
+            border: 1px dashed #CCC; /* Lighter dashed border for preview */
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 220px;
+            display: none; /* Hidden by default */
+            border-radius: 8px;
+            object-fit: contain;
+            margin-top: 10px; /* Space from H2 */
+        }
+
+        #noImageText {
+            color: var(--text-light);
+            font-style: italic;
+            font-size: 1.1em;
+            position: absolute; /* Position over the preview area */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Classify Button */
+        .classify-button {
+            background-color: var(--primary-green);
+            padding: 18px 40px;
+            font-size: 1.4em;
+            box-shadow: 0 7px 20px rgba(76, 175, 80, 0.4);
+            margin-bottom: 35px;
+        }
+
+        .classify-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .classify-button:hover:not(:disabled) {
+            background-color: var(--primary-green-dark);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.5);
+        }
+
+        /* Result Section */
+        .result-section {
+            background-color: var(--result-bg-light); /* Light green background */
+            border: 1px solid #C8E6C9; /* Matching border */
+        }
+
+        #classificationResult {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--result-text-dark);
+            margin-bottom: 20px;
+        }
+
+        #disposalTips {
+            text-align: left;
+            margin-top: 25px;
+            color: var(--text-medium);
+        }
+
+        #disposalTips h3 {
+            color: var(--result-text-dark);
+            margin-bottom: 12px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        #disposalTips p {
+            margin-bottom: 10px;
+            line-height: 1.7;
+        }
+
+        /* History Section */
+        .history-section {
+            background-color: #FDFDFD; /* Very light background */
+            border: 1px solid #E0E0E0;
+            text-align: left;
+        }
+
+        #historyList {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+            max-height: 250px; /* Taller history scroll area */
+            overflow-y: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            background-color: #FFFFFF;
+        }
+
+        #historyList li {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-medium);
+            font-size: 0.95em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #historyList li:last-child {
+            border-bottom: none;
+        }
+
+        .clear-button {
+            background-color: var(--red-clear);
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-weight: 500;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .clear-button:hover {
+            background-color: var(--red-clear-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            .button-group {
+                flex-direction: column; /* Stack buttons vertically on small screens */
+                gap: 10px;
+            }
+
+            .action-button {
+                width: 100%; /* Full width buttons */
+                padding: 12px 20px;
+                font-size: 1.1em;
+            }
+
+            .classify-button {
+                padding: 15px 30px;
+                font-size: 1.2em;
+            }
+        }
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; background-color: #F0F8FF; margin: 0; padding: 20px; box-sizing: border-box; color: #333;">
+<body>
+    <div class="container">
+        <h1>Smart Waste Classifier</h1>
 
-    <div style="background-color: #FFFFFF; padding: 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 680px; margin: 20px 0;">
-
-        <h1 style="color: #2E8B57; margin-bottom: 25px; font-size: 2.2em; font-weight: bold;">Smart Waste Classifier</h1>
-
-        <div style="background-color: #F8FDFF; padding: 25px; border-radius: 10px; border: 2px dashed #ADD8E6; margin-bottom: 25px;">
-            <h2 style="color: #4682B4; margin-top: 0; margin-bottom: 20px; font-size: 1.6em;">Upload or Paste Waste Image</h2>
-            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
-                <label for="imageUpload" style="display: inline-block; background-color: #4CAF50; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);">Choose Image</label>
-                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                <button id="pasteImageBtn" style="background-color: #2196F3; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);">Paste from Clipboard</button>
+        <div class="upload-section card">
+            <h2>Upload or Paste Waste Image</h2>
+            <div class="button-group">
+                <label for="imageUpload" class="action-button upload-button">Choose Image</label>
+                <input type="file" id="imageUpload" accept="image/*" class="hidden-input">
+                <button id="pasteImageBtn" class="action-button paste-button">Paste from Clipboard</button>
             </div>
-            <p style="margin-top: 15px; color: #666; font-size: 0.95em;">Or, directly paste an image from your clipboard.</p>
+            <p class="upload-hint">Or, directly paste an image from your clipboard.</p>
         </div>
 
-        <div style="background-color: #FDFDFD; padding: 25px; border-radius: 10px; border: 1px solid #E0E0E0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 25px;">
-            <h2 style="color: #555; margin-top: 0; margin-bottom: 15px; font-size: 1.6em;">Image Preview</h2>
-            <img id="previewImage" src="#" alt="Image Preview" style="max-width: 100%; max-height: 200px; display: none; border-radius: 8px; border: 1px solid #CCC; margin-top: 10px;">
-            <p id="noImageText" style="color: #AAA; font-style: italic; font-size: 1.1em;">No image selected</p>
+        <div class="image-preview card">
+            <h2>Image Preview</h2>
+            <img id="previewImage" src="#" alt="Image Preview">
+            <p id="noImageText">No image selected</p>
         </div>
 
-        <button id="classifyBtn" disabled style="background-color: #4CAF50; color: white; padding: 15px 35px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.3em; font-weight: bold; margin-bottom: 35px; transition: background-color 0.3s ease; box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);">Classify Waste</button>
+        <button id="classifyBtn" class="action-button classify-button" disabled>Classify Waste</button>
 
-        <div style="background-color: #E8F5E9; padding: 25px; border-radius: 10px; border: 1px solid #C8E6C9; margin-bottom: 25px;">
-            <h2 style="color: #2E8B57; margin-top: 0; margin-bottom: 20px; font-size: 1.6em;">Classification Result:</h2>
-            <p id="classificationResult" style="font-size: 1.8em; font-weight: bold; color: #1B5E20; margin-bottom: 20px;">Upload an image to classify.</p>
-            <div id="disposalTips" style="text-align: left; margin-top: 25px; color: #555;">
-                <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
+        <div class="result-section card">
+            <h2>Classification Result:</h2>
+            <p id="classificationResult">Upload an image to classify.</p>
+            <div id="disposalTips">
+                <h3>Disposal Advice:</h3>
                 <p>Once classified, detailed disposal tips will be provided here.</p>
             </div>
         </div>
 
-        <div style="background-color: #FDFDFD; padding: 25px; border-radius: 10px; border: 1px solid #E0E0E0; text-align: left;">
-            <h2 style="color: #555; margin-top: 0; margin-bottom: 20px; font-size: 1.6em;">Classification History</h2>
-            <ul id="historyList" style="list-style: none; padding: 0; margin-bottom: 20px; max-height: 250px; overflow-y: auto; border: 1px solid #EEE; border-radius: 8px; background-color: #FFFFFF;">
-                <li style="padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;">No history yet. Classify an item to start!</li>
+        <div class="history-section card">
+            <h2>Classification History</h2>
+            <ul id="historyList">
+                <li>No history yet. Classify an item to start!</li>
             </ul>
-            <button id="clearHistoryBtn" style="background-color: #F44336; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);">Clear History</button>
+            <button id="clearHistoryBtn" class="clear-button">Clear History</button>
         </div>
     </div>
 
@@ -120,7 +417,8 @@
         // These libraries are crucial for the AI model to work.
         // They are dynamically loaded to keep everything in one file.
         let model; // To hold the loaded Teachable Machine model
-        const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/"; // <--- IMPORTANT: Replace with YOUR Teachable Machine model URL
+        // IMPORTANT: Replace with YOUR Teachable Machine model URL
+        const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/";
 
         async function loadWasteModel() {
             try {
@@ -134,7 +432,7 @@
             } catch (error) {
                 console.error("Failed to load Teachable Machine model:", error);
                 classificationResult.textContent = "Error: AI model failed to load. Check console for details.";
-                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model could not be loaded. Please ensure your internet connection is active and the model URL is correct.</p>';
+                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model could not be loaded. Please ensure your internet connection is active and the model URL is correct.</p>';
             }
         }
 
@@ -152,19 +450,19 @@
 
         classifyBtn.addEventListener('click', async () => {
             classificationResult.textContent = "Classifying...";
-            disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Processing your image...</p>';
+            disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Processing your image...</p>';
 
             const image = await getImageForClassification();
             if (!image) {
                 classificationResult.textContent = "No image to classify.";
-                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please select or paste an image first.</p>';
+                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please select or paste an image first.</p>';
                 return;
             }
 
             if (!model) {
                 // If model is null/undefined, it means it hasn't loaded yet or failed to load
                 classificationResult.textContent = "AI model not loaded yet. Please wait a moment, then try again.";
-                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model is still loading or failed to load. Cannot classify.</p>';
+                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model is still loading or failed to load. Cannot classify.</p>';
                 return;
             }
 
@@ -188,7 +486,7 @@
             } catch (error) {
                 console.error("Error during classification:", error);
                 classificationResult.textContent = "Error classifying image. Please try again.";
-                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>An error occurred during classification. Check browser console for details.</p>';
+                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>An error occurred during classification. Check browser console for details.</p>';
             }
         });
 
@@ -200,7 +498,7 @@
             switch (classification.toLowerCase()) {
                 case 'recyclable': // Ensure this matches your Teachable Machine class name exactly
                     tips = `
-                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
+                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Clean it:</b> Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
                         <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Flatten it:</b> Compress plastic bottles and cardboard to save space in bins and transport.</p>
                         <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Check Local Rules:</b> Always verify local recycling guidelines as accepted materials can vary by region.</p>
@@ -209,7 +507,7 @@
                     break;
                 case 'organic': // Ensure this matches your Teachable Machine class name exactly
                     tips = `
-                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
+                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Compost if possible:</b> Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
                         <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Use designated bins:</b> If your municipality has an organic waste collection, use their specific bins.</p>
                         <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Avoid non-compostables:</b> Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
@@ -217,7 +515,7 @@
                     break;
                 case 'general': // Ensure this matches your Teachable Machine class name exactly
                     tips = `
-                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
+                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Last Resort:</b> This category is for items that cannot be recycled or composted.</p>
                         <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Bag Appropriately:</b> Ensure waste is securely bagged to prevent spills and odors.</p>
                         <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Minimize:</b> Try to reduce general waste by opting for reusable items and choosing products with less packaging.</p>
@@ -225,7 +523,7 @@
                     break;
                 default:
                     tips = `
-                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
+                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
                         <p style="margin-bottom: 10px; line-height: 1.6;">Classification uncertain. Please consult your local waste management guide for proper disposal of this item.</p>
                     `;
                     break;
@@ -238,7 +536,7 @@
             const historyItem = document.createElement('li');
             const timestamp = new Date().toLocaleString();
             historyItem.textContent = `${timestamp}: Classified as ${classification} (Prob: ${(probability * 100).toFixed(2)}%)`;
-            historyItem.style = "padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;";
+            historyItem.style = "padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;"; // Apply history item style
             historyList.prepend(historyItem); // Add to the top
 
             // Store history in Local Storage (for persistence across sessions)
@@ -256,12 +554,12 @@
             let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
             historyList.innerHTML = ''; // Clear initial placeholder
             if (history.length === 0) {
-                 historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;">No history yet. Classify an item to start!</li>';
+                 historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;">No history yet. Classify an item to start!</li>'; // Apply history item style
             } else {
                 history.forEach(item => {
                     const historyItem = document.createElement('li');
                     historyItem.textContent = `${item.timestamp}: Classified as ${item.classification} (Prob: ${(item.probability * 100).toFixed(2)}%)`;
-                    historyItem.style = "padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;";
+                    historyItem.style = "padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;"; // Apply history item style
                     historyList.appendChild(historyItem);
                 });
             }
@@ -270,7 +568,7 @@
         clearHistoryBtn.addEventListener('click', () => {
             if (confirm("Are you sure you want to clear all classification history?")) {
                 localStorage.removeItem('wasteHistory');
-                historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;">No history yet. Classify an item to start!</li>';
+                historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;">No history yet. Classify an item to start!</li>'; // Apply history item style
                 alert("History cleared!");
             }
         });
@@ -278,10 +576,10 @@
         // Initialize on page load
         window.onload = async () => {
             // Dynamically load TensorFlow.js and Teachable Machine libraries
-            // This is critical for the AI model to function.
+            // This is critical for the AI model to function and needs an internet connection.
             const tfjsScript = document.createElement('script');
             tfjsScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js";
-            tfjsScript.async = true; // Load asynchronously to not block parsing
+            tfjsScript.async = true; // Load asynchronously to not block page rendering
             tfjsScript.onload = () => {
                 const tmImageScript = document.createElement('script');
                 tmImageScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js";
@@ -291,7 +589,7 @@
             };
             document.head.appendChild(tfjsScript);
 
-            loadHistory(); // Load history from local storage
+            loadHistory(); // Load history from local storage when the page loads
         };
     </script>
 
