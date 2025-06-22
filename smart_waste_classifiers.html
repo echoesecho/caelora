@@ -5,44 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Waste Classifier</title>
 </head>
-<body>
+<body style="font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; background-color: #F0F8FF; margin: 0; padding: 20px; box-sizing: border-box; color: #333;">
 
-    <div>
-        <h1>Smart Waste Classifier</h1>
+    <div style="background-color: #FFFFFF; padding: 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); text-align: center; width: 100%; max-width: 680px; margin: 20px 0;">
 
-        <div>
-            <h2>Upload Waste Image</h2>
-            <input type="file" id="imageUpload" accept="image/*">
-            <br><br>
-            <button id="pasteImageBtn">Paste Image (from clipboard)</button>
-            <p>Or, paste an image from your clipboard.</p>
+        <h1 style="color: #2E8B57; margin-bottom: 25px; font-size: 2.2em; font-weight: bold;">Smart Waste Classifier</h1>
+
+        <div style="background-color: #F8FDFF; padding: 25px; border-radius: 10px; border: 2px dashed #ADD8E6; margin-bottom: 25px;">
+            <h2 style="color: #4682B4; margin-top: 0; margin-bottom: 20px; font-size: 1.6em;">Upload or Paste Waste Image</h2>
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
+                <label for="imageUpload" style="display: inline-block; background-color: #4CAF50; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);">Choose Image</label>
+                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                <button id="pasteImageBtn" style="background-color: #2196F3; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);">Paste from Clipboard</button>
+            </div>
+            <p style="margin-top: 15px; color: #666; font-size: 0.95em;">Or, directly paste an image from your clipboard.</p>
         </div>
 
-        <div>
-            <h2>Image Preview</h2>
-            <img id="previewImage" src="" alt="Image Preview" width="300" height="200" style="border: 1px solid #000; display: block; margin: 10px 0;">
-            <p id="noImageText">No image selected</p>
+        <div style="background-color: #FDFDFD; padding: 25px; border-radius: 10px; border: 1px solid #E0E0E0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 25px;">
+            <h2 style="color: #555; margin-top: 0; margin-bottom: 15px; font-size: 1.6em;">Image Preview</h2>
+            <img id="previewImage" src="" alt="Image Preview" style="max-width: 100%; max-height: 200px; display: none; border-radius: 8px; border: 1px solid #CCC; margin-top: 10px;">
+            <p id="noImageText" style="color: #AAA; font-style: italic; font-size: 1.1em;">No image selected</p>
         </div>
 
-        <button id="classifyBtn" disabled>Classify Waste</button>
+        <button id="classifyBtn" disabled style="background-color: #4CAF50; color: white; padding: 15px 35px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.3em; font-weight: bold; margin-bottom: 35px; transition: background-color 0.3s ease; box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);">Classify Waste</button>
 
-        <div>
-            <h2>Classification Result:</h2>
-            <p id="classificationResult">Upload an image to classify.</p>
-            <div>
-                <h3>Disposal Tips:</h3>
-                <p id="disposalTips">Tips will appear here after classification.</p>
+        <div style="background-color: #E8F5E9; padding: 25px; border-radius: 10px; border: 1px solid #C8E6C9; margin-bottom: 25px;">
+            <h2 style="color: #2E8B57; margin-top: 0; margin-bottom: 20px; font-size: 1.6em;">Classification Result:</h2>
+            <p id="classificationResult" style="font-size: 1.8em; font-weight: bold; color: #1B5E20; margin-bottom: 20px;">Upload an image to classify.</p>
+            <div id="disposalTips" style="text-align: left; margin-top: 25px; color: #555;">
+                <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
+                <p>Once classified, detailed disposal tips will be provided here.</p>
             </div>
         </div>
 
-        <div>
-            <h2>Classification History</h2>
-            <ul id="historyList">
-                <li>[Date Time]: Classified as [Type] ([Probability]%)</li>
-                <li>[Date Time]: Classified as [Type] ([Probability]%)</li>
-                <li>[Date Time]: Classified as [Type] ([Probability]%)</li>
+        <div style="background-color: #FDFDFD; padding: 25px; border-radius: 10px; border: 1px solid #E0E0E0; text-align: left;">
+            <h2 style="color: #555; margin-top: 0; margin-bottom: 20px; font-size: 1.6em;">Classification History</h2>
+            <ul id="historyList" style="list-style: none; padding: 0; margin-bottom: 20px; max-height: 250px; overflow-y: auto; border: 1px solid #EEE; border-radius: 8px; background-color: #FFFFFF;">
+                <li style="padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;">No history yet. Classify an item to start!</li>
             </ul>
-            <button id="clearHistoryBtn">Clear History</button>
+            <button id="clearHistoryBtn" style="background-color: #F44336; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);">Clear History</button>
         </div>
     </div>
 
