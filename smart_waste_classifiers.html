@@ -3,639 +3,442 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keras Waste Classifier</title>
-
+    <title>Smart Waste Classifier</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* General Body & Root Styling */
-        :root {
-            --primary-green: #4CAF50; /* A vibrant green for main actions */
-            --primary-green-dark: #45a049;
-            --blue-paste: #2196F3; /* A friendly blue for paste */
-            --blue-paste-dark: #1976D2;
-            --red-clear: #F44336; /* A clear red for clear actions */
-            --red-clear-dark: #D32F2F;
-            --background-light: #F0F2F5; /* Light background for the page */
-            --card-background: #FFFFFF; /* White for card backgrounds */
-            --text-dark: #333;
-            --text-medium: #555;
-            --text-light: #777;
-            --border-light: #EEE;
-            --shadow-soft: rgba(0, 0, 0, 0.1);
-            --border-dashed: #ADD8E6; /* Light blue for dashed border */
-            --result-bg-light: #E8F5E9; /* Very light green for result section */
-            --result-text-dark: #1B5E20; /* Darker green for result text */
-        }
-
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Align content to the top */
-            min-height: 100vh;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            color: var(--text-medium);
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-grey background */
         }
-
-        /* Main Container */
         .container {
-            background-color: var(--card-background);
-            padding: 35px;
-            border-radius: 15px; /* More rounded corners */
-            box-shadow: 0 10px 30px var(--shadow-soft); /* Enhanced shadow */
+            max-width: 900px;
+            margin: 2rem auto;
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Softer shadow */
+        }
+        .upload-area {
+            border: 3px dashed #cbd5e1; /* Lighter dashed border */
+            padding: 2rem;
+            border-radius: 1rem;
             text-align: center;
-            width: 100%;
-            max-width: 700px; /* Slightly wider */
-            margin: 20px 0;
-        }
-
-        h1 {
-            color: var(--text-dark);
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        h2 {
-            color: var(--text-dark);
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-size: 1.8em;
-            font-weight: 600;
-        }
-
-        /* Card Styling for Sections */
-        .card {
-            background-color: var(--card-background);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
-            margin-bottom: 25px;
-            border: 1px solid var(--border-light); /* Light border */
-        }
-
-        /* Specific Section Styles */
-        .upload-section {
-            border: 2px dashed var(--border-dashed); /* Light blue dashed border */
-            background-color: #F8FDFF; /* Very light blue background */
-        }
-
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px; /* Space between buttons */
-            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-            margin-top: 20px;
-        }
-
-        .action-button {
-            display: inline-block;
-            color: white;
-            padding: 14px 28px;
-            border: none;
-            border-radius: 8px; /* Slightly more rounded buttons */
             cursor: pointer;
-            font-size: 1.2em;
+            transition: border-color 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #94a3b8; /* Darker on hover */
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Deeper purple */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Rounded button */
             font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            text-decoration: none; /* For label acting as button */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
         }
-
-        .action-button:active {
-            transform: translateY(1px); /* Slight press effect */
+        .btn-primary:hover {
+            background-color: #4338ca; /* Darker purple on hover */
+            transform: translateY(-2px); /* Slight lift */
         }
-
-        .upload-button {
-            background-color: var(--primary-green);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        .btn-secondary {
+            background-color: #64748b; /* Slate grey */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
-
-        .upload-button:hover {
-            background-color: var(--primary-green-dark);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        .btn-secondary:hover {
+            background-color: #475569; /* Darker slate on hover */
+            transform: translateY(-2px);
         }
-
-        .paste-button {
-            background-color: var(--blue-paste);
-            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        .history-item {
+            background-color: #eff6ff; /* Lightest blue for history items */
+            border-left: 5px solid #6366f1; /* Accent border */
+            padding: 1rem;
+            border-radius: 0.75rem;
         }
-
-        .paste-button:hover {
-            background-color: var(--blue-paste-dark);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
         }
-
-        .hidden-input {
-            display: none; /* Hide the actual file input */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        .upload-hint {
-            margin-top: 20px;
-            color: var(--text-light);
-            font-size: 0.9em;
-        }
-
-        /* Image Preview */
-        .image-preview {
-            min-height: 250px; /* Taller preview area */
-            display: flex;
-            flex-direction: column; /* Stack image and text */
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            background-color: #FDFDFD;
-            position: relative;
-            border: 1px dashed #CCC; /* Lighter dashed border for preview */
-        }
-
-        .image-preview img {
-            max-width: 100%;
-            max-height: 220px;
-            display: none; /* Hidden by default */
-            border-radius: 8px;
-            object-fit: contain;
-            margin-top: 10px; /* Space from H2 */
-        }
-
-        #noImageText {
-            color: var(--text-light);
-            font-style: italic;
-            font-size: 1.1em;
-            position: absolute; /* Position over the preview area */
+        /* Custom message box styles */
+        .message-box {
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            max-width: 400px;
+            text-align: center;
         }
-
-        /* Classify Button */
-        .classify-button {
-            background-color: var(--primary-green);
-            padding: 18px 40px;
-            font-size: 1.4em;
-            box-shadow: 0 7px 20px rgba(76, 175, 80, 0.4);
-            margin-bottom: 35px;
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
         }
-
-        .classify-button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        .message-box-close-btn {
+            background-color: #4f46e5;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-
-        .classify-button:hover:not(:disabled) {
-            background-color: var(--primary-green-dark);
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.5);
-        }
-
-        /* Result Section */
-        .result-section {
-            background-color: var(--result-bg-light); /* Light green background */
-            border: 1px solid #C8E6C9; /* Matching border */
-        }
-
-        #classificationResult {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: var(--result-text-dark);
-            margin-bottom: 20px;
-        }
-
-        #disposalTips {
-            text-align: left;
-            margin-top: 25px;
-            color: var(--text-medium);
-        }
-
-        #disposalTips h3 {
-            color: var(--result-text-dark);
-            margin-bottom: 12px;
-            font-size: 1.3em;
-            font-weight: 600;
-        }
-
-        #disposalTips p {
-            margin-bottom: 10px;
-            line-height: 1.7;
-        }
-
-        /* History Section */
-        .history-section {
-            background-color: #FDFDFD; /* Very light background */
-            border: 1px solid #E0E0E0;
-            text-align: left;
-        }
-
-        #historyList {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
-            max-height: 250px; /* Taller history scroll area */
-            overflow-y: auto;
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            background-color: #FFFFFF;
-        }
-
-        #historyList li {
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border-light);
-            color: var(--text-medium);
-            font-size: 0.95em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #historyList li:last-child {
-            border-bottom: none;
-        }
-
-        .clear-button {
-            background-color: var(--red-clear);
-            padding: 12px 25px;
-            font-size: 1.1em;
-            font-weight: 500;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
-        }
-
-        .clear-button:hover {
-            background-color: var(--red-clear-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 2em;
-            }
-
-            h2 {
-                font-size: 1.5em;
-            }
-
-            .button-group {
-                flex-direction: column; /* Stack buttons vertically on small screens */
-                gap: 10px;
-            }
-
-            .action-button {
-                width: 100%; /* Full width buttons */
-                padding: 12px 20px;
-                font-size: 1.1em;
-            }
-
-            .classify-button {
-                padding: 15px 30px;
-                font-size: 1.2em;
-            }
+        .message-box-close-btn:hover {
+            background-color: #4338ca;
         }
     </style>
 </head>
-<body>
+<body class="p-4">
     <div class="container">
-        <h1>Keras Waste Classifier</h1>
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-4">Smart Waste Classifier</h1>
+        <p class="text-center text-gray-600 mb-8">Upload or take a photo of waste, or paste an image from your clipboard, to get it classified and learn how to dispose of it responsibly.</p>
 
-        <div class="upload-section card">
-            <h2>Upload or Paste Waste Image</h2>
-            <div class="button-group">
-                <label for="imageUpload" class="action-button upload-button">Choose Image</label>
-                <input type="file" id="imageUpload" accept="image/*" class="hidden-input">
-                <button id="pasteImageBtn" class="action-button paste-button">Paste from Clipboard</button>
-            </div>
-            <p class="upload-hint">Or, directly paste an image from your clipboard.</p>
-        </div>
-
-        <div class="image-preview card">
-            <h2>Image Preview</h2>
-            <img id="previewImage" src="#" alt="Image Preview">
-            <p id="noImageText">No image selected</p>
-        </div>
-
-        <button id="classifyBtn" class="action-button classify-button" disabled>Classify Waste</button>
-
-        <div class="result-section card">
-            <h2>Classification Result:</h2>
-            <p id="classificationResult">Upload an image to classify.</p>
-            <div id="disposalTips">
-                <h3>Disposal Advice:</h3>
-                <p>Once classified, detailed disposal tips will be provided here.</p>
+        <!-- Image Upload Section -->
+        <div class="mb-8">
+            <label for="imageUpload" class="upload-area block cursor-pointer">
+                <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                <p class="text-gray-500 mb-2">Click to upload an image, drag and drop here, or paste from clipboard</p>
+                <img id="imagePreview" src="https://placehold.co/300x200/e0e7ff/6366f1?text=Image+Preview" alt="Image Preview" class="max-w-full h-auto mx-auto mt-4 rounded-lg shadow-md" style="max-height: 300px; object-fit: contain;">
+            </label>
+            <div class="flex justify-center mt-6 space-x-4">
+                <button id="classifyBtn" class="btn-primary">Classify Waste</button>
+                <button id="clearImageBtn" class="btn-secondary">Clear Image</button>
             </div>
         </div>
 
-        <div class="history-section card">
-            <h2>Classification History</h2>
-            <ul id="historyList">
-                <li>No history yet. Classify an item to start!</li>
-            </ul>
-            <button id="clearHistoryBtn" class="clear-button">Clear History</button>
+        <!-- Classification Result Section -->
+        <div id="resultSection" class="bg-blue-50 p-6 rounded-xl shadow-lg mb-8 hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-3">Classification Result</h2>
+            <div id="loadingIndicator" class="flex items-center justify-center space-x-3 hidden">
+                <div class="loader"></div>
+                <p class="text-blue-600 text-lg">Classifying...</p>
+            </div>
+            <p id="classificationResult" class="text-xl font-bold text-blue-700 mb-2"></p>
+            <p id="disposalTip" class="text-gray-700 text-lg"></p>
+            <div class="flex justify-start mt-4">
+                <button id="copyToClipboardBtn" class="btn-secondary text-sm">Copy Result</button>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Classification History</h2>
+            <div id="historyList" class="space-y-4">
+                <!-- History items will be loaded here by JavaScript -->
+                <p id="noHistoryMessage" class="text-gray-500 text-center">No history yet. Classify some waste!</p>
+            </div>
+            <div class="flex justify-center mt-6">
+                <button id="clearHistoryBtn" class="btn-secondary">Clear History</button>
+            </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <!-- Custom Message Box -->
+    <div id="messageBoxOverlay" class="message-box-overlay"></div>
+    <div id="messageBox" class="message-box">
+        <p id="messageBoxText" class="text-lg text-gray-800"></p>
+        <button id="messageBoxCloseBtn" class="message-box-close-btn">OK</button>
+    </div>
 
     <script>
-        // --- Configuration for your Keras model ---
-        // IMPORTANT: Update this URL to point to your converted Keras model's model.json file.
-        // This 'model.json' file should be in the same directory as your index.html,
-        // OR in a subfolder (like './web_model/model.json' if you converted to 'web_model' folder)
-        const MODEL_URL = './keras_model.h5'; // ASSUMES model.json is in the same directory as index.html
-
-        // IMPORTANT: Adjust this to match the input image size your Keras model expects (e.g., 224 for MobileNet, 150 for custom)
-        const IMAGE_SIZE = 224; // Common default, but adjust to YOUR model's input size
-
-        // IMPORTANT: These labels MUST match the order in your 'labels.txt' file
-        // and the output order of your Keras model.
-        let CLASS_LABELS = []; // Will be loaded from labels.txt
-
-        // Get references to HTML elements
         const imageUpload = document.getElementById('imageUpload');
-        const pasteImageBtn = document.getElementById('pasteImageBtn');
-        const previewImage = document.getElementById('previewImage');
-        const noImageText = document.getElementById('noImageText');
+        const imagePreview = document.getElementById('imagePreview');
         const classifyBtn = document.getElementById('classifyBtn');
+        const clearImageBtn = document.getElementById('clearImageBtn'); // New button
+        const resultSection = document.getElementById('resultSection');
+        const loadingIndicator = document.getElementById('loadingIndicator');
         const classificationResult = document.getElementById('classificationResult');
-        const disposalTips = document.getElementById('disposalTips');
+        const disposalTip = document.getElementById('disposalTip');
         const historyList = document.getElementById('historyList');
+        const noHistoryMessage = document.getElementById('noHistoryMessage');
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const copyToClipboardBtn = document.getElementById('copyToClipboardBtn');
 
-        let model; // To hold the loaded TensorFlow.js model
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+        const messageBoxText = document.getElementById('messageBoxText');
+        const messageBoxCloseBtn = document.getElementById('messageBoxCloseBtn');
 
-        // Function to handle displaying an image
-        function displayImage(imageUrl) {
-            previewImage.src = imageUrl;
-            previewImage.style.display = 'block';
-            noImageText.style.display = 'none';
-            classifyBtn.disabled = false; // Enable classify button
+        let uploadedImageBase64 = ''; // Stores the base64 string of the uploaded image
+
+        // Function to show a custom message box (kept for other general messages)
+        function showMessageBox(message) {
+            messageBoxText.textContent = message;
+            messageBox.style.display = 'block';
+            messageBoxOverlay.style.display = 'block';
         }
 
-        // Event listener for image file selection
-        imageUpload.addEventListener('change', (event) => {
+        // Function to hide the custom message box
+        function hideMessageBox() {
+            messageBox.style.display = 'none';
+            messageBoxOverlay.style.display = 'none';
+        }
+
+        // Event listener for message box close button
+        messageBoxCloseBtn.addEventListener('click', hideMessageBox);
+        messageBoxOverlay.addEventListener('click', hideMessageBox); // Close when clicking clicking outside
+
+        // Handle image file selection
+        imageUpload.addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    displayImage(e.target.result);
-                };
-                reader.readAsDataURL(file);
+                processImageFile(file);
             } else {
-                // If no file selected, reset preview
-                previewImage.src = '#';
-                previewImage.style.display = 'none';
-                noImageText.style.display = 'block';
-                classifyBtn.disabled = true; // Disable classify button
+                imagePreview.src = "https://placehold.co/300x200/e0e7ff/6366f1?text=Image+Preview";
+                uploadedImageBase64 = '';
             }
         });
 
-        // Event listener for pasting image from clipboard
-        pasteImageBtn.addEventListener('click', async () => {
+        // Function to process an image file (either from input or clipboard)
+        function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                uploadedImageBase64 = e.target.result.split(',')[1]; // Get base64 part only
+                resultSection.classList.add('hidden'); // Hide previous results
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Handle drag and drop for image upload
+        const uploadArea = document.querySelector('.upload-area');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-blue-500');
+        });
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-blue-500');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-blue-500');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                imageUpload.files = e.dataTransfer.files; // Assign dropped file to input (optional, but good for consistency)
+                processImageFile(file);
+            } else {
+                showMessageBox('Please drop an image file.');
+            }
+        });
+
+        // Handle paste event for image upload from clipboard
+        document.addEventListener('paste', (e) => {
+            // Check if any items in clipboard are files (images)
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        processImageFile(file);
+                        showMessageBox('Image pasted from clipboard!');
+                        e.preventDefault(); // Prevent default paste action (e.g., pasting text)
+                        return; // Stop after finding the first image
+                    }
+                }
+            }
+        });
+
+        // Classify Waste Function
+        classifyBtn.addEventListener('click', async () => {
+            if (!uploadedImageBase64) {
+                showMessageBox('Please upload or paste an image first.');
+                return;
+            }
+
+            resultSection.classList.remove('hidden');
+            loadingIndicator.classList.remove('hidden');
+            
+            // Randomly pick a placeholder classification for immediate display
+            const classifications = ['Recyclable', 'Organic', 'General'];
+            const randomClassification = classifications[Math.floor(Math.random() * classifications.length)];
+            
+            classificationResult.textContent = `Type: ${randomClassification}`;
+            disposalTip.textContent = `Tip: Analyzing image...`;
+
+
             try {
-                const clipboardItems = await navigator.clipboard.read();
-                let imageFound = false;
-                for (const clipboardItem of clipboardItems) {
-                    for (const type of clipboardItem.types) {
-                        if (type.startsWith('image/')) {
-                            const blob = await clipboardItem.getType(type);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                                displayImage(e.target.result);
-                            };
-                            reader.readAsDataURL(blob);
-                            imageFound = true;
-                            return; // Stop after finding the first image
+                const prompt = "Classify the waste type in this image as one of the following: 'Recyclable', 'Organic', or 'General'. Also, provide a short, single-sentence tip for responsible disposal for this specific waste type. Respond in JSON format with two keys: 'classification' and 'disposalTip'.";
+                
+                const chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                
+                const payload = {
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inlineData: {
+                                        mimeType: "image/png", // Assuming PNG, adjust if needed
+                                        data: uploadedImageBase64
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "classification": { "type": "STRING" },
+                                "disposalTip": { "type": "STRING" }
+                            },
+                            "propertyOrdering": ["classification", "disposalTip"]
                         }
                     }
+                };
+                
+                // Gemini API call (ensure your API key is correctly handled in the Canvas environment)
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+                    const classification = jsonResponse.classification;
+                    const tip = jsonResponse.disposalTip;
+
+                    classificationResult.textContent = `Type: ${classification}`;
+                    disposalTip.textContent = `Tip: ${tip}`;
+
+                    saveHistory(imagePreview.src, classification, tip);
+                    displayHistory();
+
+                } else {
+                    // Handle API response issues by updating the UI directly
+                    classificationResult.textContent = `Type: Unclassified`;
+                    disposalTip.textContent = `Tip: Could not classify the image. Please try another one.`;
+                    console.error('Unexpected API response structure or no candidates:', result);
                 }
-                if (!imageFound) {
-                    alert("No image data found in clipboard. Please copy an image first.");
-                }
-            } catch (err) {
-                console.error('Failed to read clipboard contents: ', err);
-                alert("Permission to read clipboard denied or no image found. Please ensure you've copied an image and granted clipboard permissions if prompted. (Clipboard paste might require HTTPS or local server for full functionality).");
+
+            } catch (error) {
+                // Handle fetch/network errors by updating the UI directly
+                classificationResult.textContent = `Type: Error`;
+                disposalTip.textContent = `Tip: An error occurred. Please try again.`;
+                console.error('Classification error:', error);
+            } finally {
+                loadingIndicator.classList.add('hidden');
             }
         });
 
-        // --- Keras Model Loading and Prediction ---
-
-        async function loadLabels() {
-            try {
-                const response = await fetch('./labels.txt'); // ASSUMES labels.txt is in the same directory
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const text = await response.text();
-                CLASS_LABELS = text.split('\n').map(label => label.trim()).filter(label => label.length > 0);
-                console.log("Labels loaded:", CLASS_LABELS);
-            } catch (error) {
-                console.error("Failed to load labels.txt:", error);
-                alert("Error loading labels.txt. Please ensure it's in the correct directory and formatted correctly.");
-            }
-        }
-
-        async function loadKerasModel() {
-            classificationResult.textContent = "Loading AI model...";
-            disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please wait while the AI model loads...</p>';
-
-            try {
-                // Ensure labels are loaded before attempting to load the model
-                await loadLabels();
-
-                // tf.loadLayersModel is used for Keras models converted to TensorFlow.js format
-                model = await tf.loadLayersModel(MODEL_URL);
-                console.log("Keras Model Loaded Successfully!");
-                classificationResult.textContent = "AI Model Ready! Upload an image to classify.";
-            } catch (error) {
-                console.error("Failed to load Keras model:", error);
-                classificationResult.textContent = "Error: AI model failed to load. Check console for details.";
-                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model could not be loaded. Please ensure your internet connection is active, the model URL is correct, and the model is converted to TensorFlow.js format.</p>';
-            }
-        }
-
-        // Preprocess the image for the Keras model
-        async function preprocessImage(imageElement) {
-            return tf.tidy(() => {
-                let imgTensor = tf.browser.fromPixels(imageElement); // Convert image to tensor
-
-                // Resize image to the expected input size of your model
-                imgTensor = tf.image.resizeBilinear(imgTensor, [IMAGE_SIZE, IMAGE_SIZE]);
-
-                // Convert to float32
-                imgTensor = imgTensor.toFloat();
-
-                // Normalize pixel values. Common for Keras is to divide by 255.0
-                // If your model expects values in [-1, 1], you would do:
-                // imgTensor = imgTensor.div(tf.scalar(127.5)).sub(tf.scalar(1));
-                imgTensor = imgTensor.div(tf.scalar(255.0)); // Normalize to [0, 1]
-
-                // Add a batch dimension (e.g., from [HEIGHT, WIDTH, CHANNELS] to [1, HEIGHT, WIDTH, CHANNELS])
-                imgTensor = imgTensor.expandDims(0);
-                return imgTensor;
-            });
-        }
-
-        classifyBtn.addEventListener('click', async () => {
-            classificationResult.textContent = "Classifying...";
-            disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Processing your image...</p>';
-
-            const imageElement = previewImage; // Use the actual img element
-            if (!imageElement || imageElement.style.display === 'none' || imageElement.src === '#') {
-                classificationResult.textContent = "No image to classify.";
-                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please select or paste an image first.</p>';
-                return;
-            }
-
-            if (!model) {
-                classificationResult.textContent = "AI model not loaded yet. Please wait a moment, then try again.";
-                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model is still loading or failed to load. Cannot classify.</p>';
-                return;
-            }
-
-            if (CLASS_LABELS.length === 0) {
-                 classificationResult.textContent = "Error: Class labels not loaded.";
-                 disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Cannot classify without class labels. Check console for errors in loading labels.txt.</p>';
-                 return;
-            }
-
-
-            try {
-                // Preprocess the image
-                const preprocessedImage = await preprocessImage(imageElement);
-
-                // Make prediction
-                const prediction = model.predict(preprocessedImage);
-                const probabilities = await prediction.data(); // Get raw probabilities as a flat array
-                tf.dispose(preprocessedImage); // Clean up tensor memory
-
-                let maxProbability = 0;
-                let predictedClassIndex = -1;
-
-                // Find the class with the highest probability
-                for (let i = 0; i < probabilities.length; i++) {
-                    if (probabilities[i] > maxProbability) {
-                        maxProbability = probabilities[i];
-                        predictedClassIndex = i;
-                    }
-                }
-
-                const predictedClass = CLASS_LABELS[predictedClassIndex] || "Unknown";
-
-                classificationResult.textContent = `Classified as: ${predictedClass} (${(maxProbability * 100).toFixed(2)}%)`;
-                displayDisposalTips(predictedClass);
-                addToHistory(predictedClass, maxProbability);
-
-            } catch (error) {
-                console.error("Error during classification:", error);
-                classificationResult.textContent = "Error classifying image. Please try again.";
-                disposalTips.innerHTML = '<h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>An error occurred during classification. Check browser console for details.</p>';
-            }
+        // Clear Image from preview
+        clearImageBtn.addEventListener('click', () => {
+            imagePreview.src = "https://placehold.co/300x200/e0e7ff/6366f1?text=Image+Preview";
+            uploadedImageBase64 = '';
+            resultSection.classList.add('hidden');
+            classificationResult.textContent = '';
+            disposalTip.textContent = '';
+            showMessageBox('Image cleared from preview.');
         });
 
-        // --- Disposal Tips Logic ---
-        function displayDisposalTips(classification) {
-            disposalTips.innerHTML = ''; // Clear previous tips
-            let tips = '';
 
-            switch (classification.toLowerCase()) {
-                case 'recyclable': // Ensure this matches one of your CLASS_LABELS
-                    tips = `
-                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Clean it:</b> Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Flatten it:</b> Compress plastic bottles and cardboard to save space in bins and transport.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Check Local Rules:</b> Always verify local recycling guidelines as accepted materials can vary by region.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">4. <b>No Contaminants:</b> Avoid putting items like plastic bags (unless specified), food-soiled paper, or hazardous waste in recycling.</p>
-                    `;
-                    break;
-                case 'organic': // Ensure this matches one of your CLASS_LABELS
-                    tips = `
-                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Compost if possible:</b> Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Use designated bins:</b> If your municipality has an organic waste collection, use their specific bins.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Avoid non-compostables:</b> Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
-                    `;
-                    break;
-                case 'general': // Ensure this matches one of your CLASS_LABELS
-                    tips = `
-                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Last Resort:</b> This category is for items that cannot be recycled or composted.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Bag Appropriately:</b> Ensure waste is securely bagged to prevent spills and odors.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Minimize:</b> Try to reduce general waste by opting for reusable items and choosing products with less packaging.</p>
-                    `;
-                    break;
-                // Add more cases here if you have other specific classes like 'Hazardous'
-                // case 'hazardous':
-                //     tips = `... your tips for hazardous waste ...`;
-                //     break;
-                default:
-                    tips = `
-                        <h3 style="color: #1B5E20; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">Classification uncertain or specific tips not available. Please consult your local waste management guide for proper disposal of this item.</p>
-                    `;
-                    break;
-            }
-            disposalTips.innerHTML = tips;
-        }
-
-        // --- History Management ---
-        function addToHistory(classification, probability) {
-            const historyItem = document.createElement('li');
+        // Save classification to local storage
+        function saveHistory(imageDataUrl, classification, tip) {
+            const history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
             const timestamp = new Date().toLocaleString();
-            historyItem.textContent = `${timestamp}: Classified as ${classification} (Prob: ${(probability * 100).toFixed(2)}%)`;
-            historyItem.style = "padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;"; // Apply history item style
-            historyList.prepend(historyItem); // Add to the top
-
-            // Store history in Local Storage (for persistence across sessions)
-            let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
-            history.unshift({ classification, probability, timestamp });
+            history.unshift({ imageDataUrl, classification, tip, timestamp }); // Add to beginning
             localStorage.setItem('wasteHistory', JSON.stringify(history));
-
-            // Remove the "No history yet" placeholder if present and there's more than one item
-            if (historyList.children.length > 1 && historyList.lastElementChild && historyList.lastElementChild.textContent.includes("No history yet")) {
-                historyList.removeChild(historyList.lastElementChild);
-            }
         }
 
-        function loadHistory() {
-            let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
-            historyList.innerHTML = ''; // Clear initial placeholder
+        // Display history from local storage
+        function displayHistory() {
+            const history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
+            historyList.innerHTML = ''; // Clear current list
+
             if (history.length === 0) {
-                 historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;">No history yet. Classify an item to start!</li>'; // Apply history item style
+                noHistoryMessage.classList.remove('hidden');
             } else {
-                history.forEach(item => {
-                    const historyItem = document.createElement('li');
-                    historyItem.textContent = `${item.timestamp}: Classified as ${item.classification} (Prob: ${(item.probability * 100).toFixed(2)}%)`;
-                    historyItem.style = "padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;"; // Apply history item style
+                noHistoryMessage.classList.add('hidden');
+                history.forEach((item, index) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('history-item', 'flex', 'items-center', 'space-x-4');
+                    historyItem.innerHTML = `
+                        <img src="${item.imageDataUrl}" alt="Waste Image" class="w-16 h-16 object-cover rounded-md shadow-sm">
+                        <div>
+                            <p class="font-semibold text-gray-700">Type: ${item.classification}</p>
+                            <p class="text-sm text-gray-600">${item.tip}</p>
+                            <p class="text-xs text-gray-400 mt-1">Classified on: ${item.timestamp}</p>
+                        </div>
+                    `;
                     historyList.appendChild(historyItem);
                 });
             }
         }
 
+        // Clear History
         clearHistoryBtn.addEventListener('click', () => {
-            if (confirm("Are you sure you want to clear all classification history?")) {
-                localStorage.removeItem('wasteHistory');
-                historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid var(--border-light); color: var(--text-medium); font-size: 0.95em; display: flex; justify-content: space-between; align-items: center;">No history yet. Classify an item to start!</li>'; // Apply history item style
-                alert("History cleared!");
+            localStorage.removeItem('wasteHistory');
+            displayHistory();
+            showMessageBox('Classification history has been cleared.');
+        });
+
+        // Copy to Clipboard
+        copyToClipboardBtn.addEventListener('click', () => {
+            const textToCopy = `Classification: ${classificationResult.textContent}\n${disposalTip.textContent}`;
+            
+            // Fallback for older browsers or environments without navigator.clipboard
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showMessageBox('Result copied to clipboard!');
+                } else {
+                    showMessageBox('Failed to copy to clipboard.');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showMessageBox('Failed to copy to clipboard (browser support issue).');
+            } finally {
+                document.body.removeChild(tempTextArea);
             }
         });
 
-        // Initialize on page load
-        window.onload = async () => {
-            // Load the Keras model (converted to TF.js format) and labels
-            await loadKerasModel(); // Wait for model and labels to load
-            loadHistory(); // Load history from local storage when the page loads
-        };
-    </script>
+        // Load history on page load
+        window.onload = displayHistory;
 
+    </script>
 </body>
 </html>
