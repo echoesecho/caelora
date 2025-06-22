@@ -4,38 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Waste Classifier</title>
-    </head>
+</head>
 <body>
-    <div class="container">
+
+    <div>
         <h1>Smart Waste Classifier</h1>
 
-        <div class="upload-section">
+        <div>
+            <h2>Upload Waste Image</h2>
             <input type="file" id="imageUpload" accept="image/*">
+            <br><br>
             <button id="pasteImageBtn">Paste Image (from clipboard)</button>
             <p>Or, paste an image from your clipboard.</p>
         </div>
 
-        <div class="image-preview">
-            <img id="previewImage" src="#" alt="Image Preview">
+        <div>
+            <h2>Image Preview</h2>
+            <img id="previewImage" src="" alt="Image Preview" width="300" height="200" style="border: 1px solid #000; display: block; margin: 10px 0;">
             <p id="noImageText">No image selected</p>
         </div>
 
         <button id="classifyBtn" disabled>Classify Waste</button>
 
-        <div class="result-section">
+        <div>
             <h2>Classification Result:</h2>
             <p id="classificationResult">Upload an image to classify.</p>
-            <div id="disposalTips">
-                </div>
+            <div>
+                <h3>Disposal Tips:</h3>
+                <p id="disposalTips">Tips will appear here after classification.</p>
+            </div>
         </div>
 
-        <div class="history-section">
+        <div>
             <h2>Classification History</h2>
             <ul id="historyList">
-                </ul>
+                <li>[Date Time]: Classified as [Type] ([Probability]%)</li>
+                <li>[Date Time]: Classified as [Type] ([Probability]%)</li>
+                <li>[Date Time]: Classified as [Type] ([Probability]%)</li>
+            </ul>
             <button id="clearHistoryBtn">Clear History</button>
         </div>
     </div>
 
-    </body>
+</body>
 </html>
