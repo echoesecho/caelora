@@ -88,9 +88,6 @@
         // Event listener for pasting image from clipboard
         pasteImageBtn.addEventListener('click', async () => {
             try {
-                // Clipboard API requires user permission and a secure context (HTTPS)
-                // If running locally, you might need to enable a flag in your browser (e.g., Chrome: chrome://flags/#unsafely-treat-as-secure-origin)
-                // or serve via a local web server (like `python -m http.server`) for it to work.
                 const clipboardItems = await navigator.clipboard.read();
                 let imageFound = false;
                 for (const clipboardItem of clipboardItems) {
@@ -117,10 +114,8 @@
         });
 
         // --- Placeholder for AI Model and Classification (Requires TensorFlow.js) ---
-        // This part needs the TensorFlow.js libraries included in <head> or before this script.
-        // For example:
-        // <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-        // <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js"></script>
+        // These libraries are crucial for the AI model to work.
+        // They are dynamically loaded to keep everything in one file.
         let model; // To hold the loaded Teachable Machine model
         const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/"; // Your Teachable Machine model URL
 
@@ -128,12 +123,13 @@
             try {
                 const modelURL = TM_URL + "model.json";
                 const metadataURL = TM_URL + "metadata.json";
-                // Assuming tmImage is available from the Teachable Machine library
+                // Assuming tmImage is available from the Teachable Machine library loaded below
                 model = await tmImage.load(modelURL, metadataURL);
                 console.log("Teachable Machine Model Loaded Successfully!");
-                // You could update a status message here
+                // You could update a status message on the page here, e.g., "AI Model Ready!"
             } catch (error) {
                 console.error("Failed to load Teachable Machine model:", error);
+                // Optionally alert the user or show a message on the page
                 // alert("Failed to load the AI model. Classification will not work.");
             }
         }
@@ -168,6 +164,7 @@
             }
 
             try {
+                // Perform prediction using the loaded Teachable Machine model
                 const prediction = await model.predict(image);
 
                 let maxProbability = 0;
@@ -191,7 +188,7 @@
             }
         });
 
-        // --- Disposal Tips Logic ---
+        // --- Disposal Tips Logic (This is the section you showed in the image) ---
         function displayDisposalTips(classification) {
             disposalTips.innerHTML = ''; // Clear previous tips
             let tips = '';
@@ -200,26 +197,26 @@
                 case 'recyclable': // Ensure this matches your Teachable Machine class name
                     tips = `
                         <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">1. **Clean it:** Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">2. **Flatten it:** Compress plastic bottles and cardboard to save space in bins and transport.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">3. **Check Local Rules:** Always verify local recycling guidelines as accepted materials can vary by region.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">4. **No Contaminants:** Avoid putting items like plastic bags (unless specified), food-soiled paper, or hazardous waste in recycling.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Clean it:</b> Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Flatten it:</b> Compress plastic bottles and cardboard to save space in bins and transport.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Check Local Rules:</b> Always verify local recycling guidelines as accepted materials can vary by region.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">4. <b>No Contaminants:</b> Avoid putting items like plastic bags (unless specified), food-soiled paper, or hazardous waste in recycling.</p>
                     `;
                     break;
                 case 'organic': // Ensure this matches your Teachable Machine class name
                     tips = `
                         <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">1. **Compost if possible:** Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">2. **Use designated bins:** If your municipality has an organic waste collection, use their specific bins.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">3. **Avoid non-compostables:** Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Compost if possible:</b> Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Use designated bins:</b> If your municipality has an organic waste collection, use their specific bins.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Avoid non-compostables:</b> Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
                     `;
                     break;
                 case 'general': // Ensure this matches your Teachable Machine class name
                     tips = `
                         <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">1. **Last Resort:** This category is for items that cannot be recycled or composted.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">2. **Bag Appropriately:** Ensure waste is securely bagged to prevent spills and odors.</p>
-                        <p style="margin-bottom: 10px; line-height: 1.6;">3. **Minimize:** Try to reduce general waste by opting for reusable items and choosing products with less packaging.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">1. <b>Last Resort:</b> This category is for items that cannot be recycled or composted.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">2. <b>Bag Appropriately:</b> Ensure waste is securely bagged to prevent spills and odors.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">3. <b>Minimize:</b> Try to reduce general waste by opting for reusable items and choosing products with less packaging.</p>
                     `;
                     break;
                 default:
@@ -244,6 +241,11 @@
             let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
             history.unshift({ classification, probability, timestamp });
             localStorage.setItem('wasteHistory', JSON.stringify(history));
+
+            // Remove the "No history yet" placeholder if present
+            if (historyList.children.length > 1 && historyList.children[historyList.children.length - 1].textContent.includes("No history yet")) {
+                historyList.removeChild(historyList.children[historyList.children.length - 1]);
+            }
         }
 
         function loadHistory() {
@@ -271,13 +273,9 @@
 
         // Initialize on page load
         window.onload = async () => {
-            // It's crucial to load the TensorFlow.js and Teachable Machine libraries
-            // BEFORE attempting to load the model. They are usually put in <head>
-            // For example:
-            // <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-            // <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js"></script>
-
-            // Dynamically load Teachable Machine's libraries (less common, but works for a single file)
+            // Dynamically load TensorFlow.js and Teachable Machine libraries
+            // This ensures they are available before trying to load your model.
+            // This might take a moment depending on internet speed.
             const tfjsScript = document.createElement('script');
             tfjsScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js";
             tfjsScript.onload = () => {
