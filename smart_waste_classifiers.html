@@ -23,7 +23,7 @@
 
         <div style="background-color: #FDFDFD; padding: 25px; border-radius: 10px; border: 1px solid #E0E0E0; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 25px;">
             <h2 style="color: #555; margin-top: 0; margin-bottom: 15px; font-size: 1.6em;">Image Preview</h2>
-            <img id="previewImage" src="" alt="Image Preview" style="max-width: 100%; max-height: 200px; display: none; border-radius: 8px; border: 1px solid #CCC; margin-top: 10px;">
+            <img id="previewImage" src="#" alt="Image Preview" style="max-width: 100%; max-height: 200px; display: none; border-radius: 8px; border: 1px solid #CCC; margin-top: 10px;">
             <p id="noImageText" style="color: #AAA; font-style: italic; font-size: 1.1em;">No image selected</p>
         </div>
 
@@ -46,6 +46,251 @@
             <button id="clearHistoryBtn" style="background-color: #F44336; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);">Clear History</button>
         </div>
     </div>
+
+    <script>
+        // Get references to HTML elements
+        const imageUpload = document.getElementById('imageUpload');
+        const pasteImageBtn = document.getElementById('pasteImageBtn');
+        const previewImage = document.getElementById('previewImage');
+        const noImageText = document.getElementById('noImageText');
+        const classifyBtn = document.getElementById('classifyBtn');
+        const classificationResult = document.getElementById('classificationResult');
+        const disposalTips = document.getElementById('disposalTips');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        // Function to handle displaying an image
+        function displayImage(imageUrl) {
+            previewImage.src = imageUrl;
+            previewImage.style.display = 'block';
+            noImageText.style.display = 'none';
+            classifyBtn.disabled = false; // Enable classify button
+        }
+
+        // Event listener for image file selection
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    displayImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // If no file selected, reset preview
+                previewImage.src = '#';
+                previewImage.style.display = 'none';
+                noImageText.style.display = 'block';
+                classifyBtn.disabled = true; // Disable classify button
+            }
+        });
+
+        // Event listener for pasting image from clipboard
+        pasteImageBtn.addEventListener('click', async () => {
+            try {
+                // Clipboard API requires user permission and a secure context (HTTPS)
+                // If running locally, you might need to enable a flag in your browser (e.g., Chrome: chrome://flags/#unsafely-treat-as-secure-origin)
+                // or serve via a local web server (like `python -m http.server`) for it to work.
+                const clipboardItems = await navigator.clipboard.read();
+                let imageFound = false;
+                for (const clipboardItem of clipboardItems) {
+                    for (const type of clipboardItem.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await clipboardItem.getType(type);
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                displayImage(e.target.result);
+                            };
+                            reader.readAsDataURL(blob);
+                            imageFound = true;
+                            return; // Stop after finding the first image
+                        }
+                    }
+                }
+                if (!imageFound) {
+                    alert("No image data found in clipboard. Please copy an image first.");
+                }
+            } catch (err) {
+                console.error('Failed to read clipboard contents: ', err);
+                alert("Permission to read clipboard denied or no image found. Please ensure you've copied an image and granted clipboard permissions if prompted. (Clipboard paste might require HTTPS or local server for full functionality).");
+            }
+        });
+
+        // --- Placeholder for AI Model and Classification (Requires TensorFlow.js) ---
+        // This part needs the TensorFlow.js libraries included in <head> or before this script.
+        // For example:
+        // <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+        // <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js"></script>
+        let model; // To hold the loaded Teachable Machine model
+        const TM_URL = "https://teachablemachine.withgoogle.com/models/eg1OfKiX4/"; // Your Teachable Machine model URL
+
+        async function loadWasteModel() {
+            try {
+                const modelURL = TM_URL + "model.json";
+                const metadataURL = TM_URL + "metadata.json";
+                // Assuming tmImage is available from the Teachable Machine library
+                model = await tmImage.load(modelURL, metadataURL);
+                console.log("Teachable Machine Model Loaded Successfully!");
+                // You could update a status message here
+            } catch (error) {
+                console.error("Failed to load Teachable Machine model:", error);
+                // alert("Failed to load the AI model. Classification will not work.");
+            }
+        }
+
+        // Function to get image from previewImage element for classification
+        async function getImageForClassification() {
+            if (previewImage.style.display === 'block' && previewImage.src !== '#') {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.src = previewImage.src;
+                });
+            }
+            return null;
+        }
+
+        classifyBtn.addEventListener('click', async () => {
+            classificationResult.textContent = "Classifying...";
+            disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Processing your image...</p>';
+
+            const image = await getImageForClassification();
+            if (!image) {
+                classificationResult.textContent = "No image to classify.";
+                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>Please select or paste an image first.</p>';
+                return;
+            }
+
+            if (!model) {
+                classificationResult.textContent = "AI model not loaded. Please wait or check console for errors.";
+                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>AI model is still loading or failed to load. Cannot classify.</p>';
+                return;
+            }
+
+            try {
+                const prediction = await model.predict(image);
+
+                let maxProbability = 0;
+                let predictedClass = "Unknown";
+
+                prediction.forEach(p => {
+                    if (p.probability > maxProbability) {
+                        maxProbability = p.probability;
+                        predictedClass = p.className;
+                    }
+                });
+
+                classificationResult.textContent = `Classified as: ${predictedClass} (${(maxProbability * 100).toFixed(2)}%)`;
+                displayDisposalTips(predictedClass);
+                addToHistory(predictedClass, maxProbability);
+
+            } catch (error) {
+                console.error("Error during classification:", error);
+                classificationResult.textContent = "Error classifying image. Please try again.";
+                disposalTips.innerHTML = '<h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3><p>An error occurred during classification. Check console for details.</p>';
+            }
+        });
+
+        // --- Disposal Tips Logic ---
+        function displayDisposalTips(classification) {
+            disposalTips.innerHTML = ''; // Clear previous tips
+            let tips = '';
+
+            switch (classification.toLowerCase()) {
+                case 'recyclable': // Ensure this matches your Teachable Machine class name
+                    tips = `
+                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Recycling Guidelines:</h3>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">1. **Clean it:** Rinse containers (bottles, jars) to remove food residue. This prevents contamination.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">2. **Flatten it:** Compress plastic bottles and cardboard to save space in bins and transport.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">3. **Check Local Rules:** Always verify local recycling guidelines as accepted materials can vary by region.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">4. **No Contaminants:** Avoid putting items like plastic bags (unless specified), food-soiled paper, or hazardous waste in recycling.</p>
+                    `;
+                    break;
+                case 'organic': // Ensure this matches your Teachable Machine class name
+                    tips = `
+                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Organic Waste Guidelines:</h3>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">1. **Compost if possible:** Food scraps (fruit/vegetable peels, coffee grounds, eggshells) are excellent for composting.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">2. **Use designated bins:** If your municipality has an organic waste collection, use their specific bins.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">3. **Avoid non-compostables:** Generally, avoid meat, dairy, bones, or oily foods in home compost bins.</p>
+                    `;
+                    break;
+                case 'general': // Ensure this matches your Teachable Machine class name
+                    tips = `
+                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">General Waste Guidelines:</h3>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">1. **Last Resort:** This category is for items that cannot be recycled or composted.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">2. **Bag Appropriately:** Ensure waste is securely bagged to prevent spills and odors.</p>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">3. **Minimize:** Try to reduce general waste by opting for reusable items and choosing products with less packaging.</p>
+                    `;
+                    break;
+                default:
+                    tips = `
+                        <h3 style="color: #2E8B57; margin-bottom: 12px; font-size: 1.3em;">Disposal Advice:</h3>
+                        <p style="margin-bottom: 10px; line-height: 1.6;">Classification uncertain. Please consult your local waste management guide for proper disposal of this item.</p>
+                    `;
+                    break;
+            }
+            disposalTips.innerHTML = tips;
+        }
+
+        // --- History Management ---
+        function addToHistory(classification, probability) {
+            const historyItem = document.createElement('li');
+            const timestamp = new Date().toLocaleString();
+            historyItem.textContent = `${timestamp}: Classified as ${classification} (Prob: ${(probability * 100).toFixed(2)}%)`;
+            historyItem.style = "padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;";
+            historyList.prepend(historyItem); // Add to the top
+
+            // Store history in Local Storage (for persistence across sessions)
+            let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
+            history.unshift({ classification, probability, timestamp });
+            localStorage.setItem('wasteHistory', JSON.stringify(history));
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
+            historyList.innerHTML = ''; // Clear initial placeholder
+            if (history.length === 0) {
+                 historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;">No history yet. Classify an item to start!</li>';
+            } else {
+                history.forEach(item => {
+                    const historyItem = document.createElement('li');
+                    historyItem.textContent = `${item.timestamp}: Classified as ${item.classification} (Prob: ${(item.probability * 100).toFixed(2)}%)`;
+                    historyItem.style = "padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;";
+                    historyList.appendChild(historyItem);
+                });
+            }
+        }
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear all classification history?")) {
+                localStorage.removeItem('wasteHistory');
+                historyList.innerHTML = '<li style="padding: 12px 20px; border-bottom: 1px solid #F0F0F0; color: #666; font-size: 0.95em;">No history yet. Classify an item to start!</li>';
+                alert("History cleared!");
+            }
+        });
+
+        // Initialize on page load
+        window.onload = async () => {
+            // It's crucial to load the TensorFlow.js and Teachable Machine libraries
+            // BEFORE attempting to load the model. They are usually put in <head>
+            // For example:
+            // <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+            // <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js"></script>
+
+            // Dynamically load Teachable Machine's libraries (less common, but works for a single file)
+            const tfjsScript = document.createElement('script');
+            tfjsScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js";
+            tfjsScript.onload = () => {
+                const tmImageScript = document.createElement('script');
+                tmImageScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/tm-image@latest/dist/tm-image.min.js";
+                tmImageScript.onload = loadWasteModel; // Load your model AFTER tmImage is loaded
+                document.head.appendChild(tmImageScript);
+            };
+            document.head.appendChild(tfjsScript);
+
+            loadHistory(); // Load history from local storage
+        };
+    </script>
 
 </body>
 </html>
